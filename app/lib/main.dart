@@ -45,6 +45,9 @@ class PetHomePage extends StatefulWidget {
 class _PetHomePageState extends State<PetHomePage> {
   final List<CodexPetEvent> _tasks = <CodexPetEvent>[];
   Timer? _refreshTimer;
+  bool _refreshInFlight = false;
+  DateTime? _lastSessionScanAt;
+  List<CodexPetEvent> _cachedActiveSessionEvents = const <CodexPetEvent>[];
   String? _error;
   bool _loading = true;
   bool _panelOpen = false;
@@ -270,6 +273,11 @@ class _PetHomePageState extends State<PetHomePage> {
   }
 
   Future<void> _loadTasks({bool silent = false}) async {
+    if (_refreshInFlight) {
+      return;
+    }
+    _refreshInFlight = true;
+
     if (!silent) {
       setState(() {
         _loading = true;
@@ -287,14 +295,17 @@ class _PetHomePageState extends State<PetHomePage> {
         return;
       }
 
-      setState(() {
-        _tasks
-          ..clear()
-          ..addAll(events);
-        _loading = false;
-        _error = null;
-      });
-      if (_panelOpen) {
+      final changed = !_sameTaskSnapshot(events);
+      if (changed || !silent || _loading || _error != null) {
+        setState(() {
+          _tasks
+            ..clear()
+            ..addAll(events);
+          _loading = false;
+          _error = null;
+        });
+      }
+      if (_panelOpen && changed) {
         await WindowController.setExpanded(
           true,
           height: _expandedWindowHeight(taskCount: events.length),
@@ -310,7 +321,26 @@ class _PetHomePageState extends State<PetHomePage> {
         _error = error.toString();
         _loading = false;
       });
+    } finally {
+      _refreshInFlight = false;
     }
+  }
+
+  bool _sameTaskSnapshot(List<CodexPetEvent> next) {
+    if (_tasks.length != next.length) {
+      return false;
+    }
+    for (var index = 0; index < next.length; index += 1) {
+      final current = _tasks[index];
+      final incoming = next[index];
+      if (current.taskKey != incoming.taskKey ||
+          current.type != incoming.type ||
+          current.timestamp != incoming.timestamp ||
+          current.message != incoming.message) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _loadDiagnostics({bool includeNodeCheck = true}) async {
@@ -621,40 +651,52 @@ class _PetHomePageState extends State<PetHomePage> {
   }
 
   Future<List<CodexPetEvent>> _readActiveSessionEvents() async {
+    final now = DateTime.now().toUtc();
+    final lastScanAt = _lastSessionScanAt;
+    if (lastScanAt != null &&
+        now.difference(lastScanAt) < const Duration(seconds: 6)) {
+      return _cachedActiveSessionEvents;
+    }
+
     final sessionsDir = Directory(ProjectPaths.codexSessionsDir);
     if (!await sessionsDir.exists()) {
       return const [];
     }
 
-    final files = await sessionsDir
-        .list(recursive: true, followLinks: false)
-        .where((entity) => entity is File && entity.path.endsWith('.jsonl'))
-        .cast<File>()
-        .toList();
-
-    files.sort((left, right) {
-      final leftModified = left.statSync().modified;
-      final rightModified = right.statSync().modified;
-      return rightModified.compareTo(leftModified);
-    });
-
     final activeEvents = <CodexPetEvent>[];
-    final now = DateTime.now().toUtc();
     final cutoff = now.subtract(const Duration(hours: 8));
     final staleCutoff = now.subtract(const Duration(minutes: 15));
+    final candidates = <(File, FileStat)>[];
 
-    for (final file in files.take(30)) {
-      final modifiedAt = file.statSync().modified.toUtc();
-      if (modifiedAt.isBefore(staleCutoff)) {
+    await for (final entity in sessionsDir.list(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File || !entity.path.endsWith('.jsonl')) {
         continue;
       }
+      final stat = await entity.stat();
+      if (!stat.modified.toUtc().isBefore(staleCutoff)) {
+        candidates.add((entity, stat));
+      }
+    }
+
+    candidates.sort(
+      (left, right) => right.$2.modified.compareTo(left.$2.modified),
+    );
+
+    for (final candidate in candidates.take(12)) {
+      final file = candidate.$1;
+      final modifiedAt = candidate.$2.modified.toUtc();
       final active = await _activeEventFromSession(file, cutoff, modifiedAt);
       if (active != null) {
         activeEvents.add(active);
       }
     }
 
-    return activeEvents;
+    _lastSessionScanAt = now;
+    _cachedActiveSessionEvents = List.unmodifiable(activeEvents);
+    return _cachedActiveSessionEvents;
   }
 
   Future<CodexPetEvent?> _activeEventFromSession(
@@ -673,12 +715,15 @@ class _PetHomePageState extends State<PetHomePage> {
     String? currentTurnId;
     String? currentPrompt;
 
-    for (final line in await file.readAsLines()) {
+    for (final line in await _readRelevantSessionLines(file)) {
       if (line.trim().isEmpty) {
         continue;
       }
 
-      final entry = jsonDecode(line) as Map<String, dynamic>;
+      final entry = _tryDecodeSessionLine(line);
+      if (entry == null) {
+        continue;
+      }
       final timestamp = entry['timestamp']?.toString();
       final payload = entry['payload'] is Map<String, dynamic>
           ? entry['payload'] as Map<String, dynamic>
@@ -794,6 +839,39 @@ class _PetHomePageState extends State<PetHomePage> {
       turnId: startedTurnId,
       source: source,
     );
+  }
+
+  Future<List<String>> _readRelevantSessionLines(File file) async {
+    const prefixLength = 64 * 1024;
+    const tailLength = 256 * 1024;
+    final length = await file.length();
+    if (length <= prefixLength + tailLength) {
+      return file.readAsLines();
+    }
+
+    final prefix = await _readFileSlice(file, 0, prefixLength);
+    final tail = await _readFileSlice(file, length - tailLength, tailLength);
+    return '$prefix\n$tail'.split('\n');
+  }
+
+  Future<String> _readFileSlice(File file, int offset, int length) async {
+    final handle = await file.open();
+    try {
+      await handle.setPosition(offset);
+      final bytes = await handle.read(length);
+      return utf8.decode(bytes, allowMalformed: true);
+    } finally {
+      await handle.close();
+    }
+  }
+
+  Map<String, dynamic>? _tryDecodeSessionLine(String line) {
+    try {
+      final decoded = jsonDecode(line);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   String? _turnIdFromPayload(
@@ -1517,8 +1595,9 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     with TickerProviderStateMixin {
   late final AnimationController _controller;
   late final AnimationController _transitionController;
+  Timer? _motionTimer;
   _PugMood? _previousMood;
-  var _assetsPrecached = false;
+  final _precachedMascots = <_PetfyMascot>{};
 
   @override
   void initState() {
@@ -1532,30 +1611,23 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
       duration: const Duration(milliseconds: 520),
       value: 1,
     );
-    if (widget.animationsEnabled) {
-      _controller.repeat();
-    }
+    _updateMotionLoop(_currentMood);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_assetsPrecached) {
-      return;
-    }
-    _assetsPrecached = true;
-    for (final mascot in _PetfyMascot.values) {
-      for (final mood in _PugMood.values) {
-        precacheImage(AssetImage(mascot.assetPath(mood)), context);
-      }
-    }
+    _precacheMascot(widget.mascot);
   }
 
   @override
   void didUpdateWidget(covariant _FloatingPetButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.mascot != widget.mascot) {
+      _precacheMascot(widget.mascot);
+    }
     final oldMood = _PugMood.fromTask(oldWidget.task, oldWidget.loading);
-    final nextMood = _PugMood.fromTask(widget.task, widget.loading);
+    final nextMood = _currentMood;
     if (oldMood != nextMood && widget.animationsEnabled) {
       _previousMood = oldMood;
       _transitionController
@@ -1563,23 +1635,66 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
         ..forward(from: 0);
     }
 
-    if (widget.animationsEnabled && !_controller.isAnimating) {
-      _controller.repeat();
-    } else if (!widget.animationsEnabled && _controller.isAnimating) {
-      _controller.stop();
-    }
+    _updateMotionLoop(nextMood);
   }
 
   @override
   void dispose() {
+    _motionTimer?.cancel();
     _controller.dispose();
     _transitionController.dispose();
     super.dispose();
   }
 
+  void _precacheMascot(_PetfyMascot mascot) {
+    if (!_precachedMascots.add(mascot)) {
+      return;
+    }
+    for (final mood in _PugMood.values) {
+      precacheImage(
+        ResizeImage.resizeIfNeeded(
+          384,
+          null,
+          AssetImage(mascot.assetPath(mood)),
+        ),
+        context,
+      );
+    }
+  }
+
+  _PugMood get _currentMood => _PugMood.fromTask(widget.task, widget.loading);
+
+  bool _shouldAnimateContinuously(_PugMood mood) {
+    return widget.animationsEnabled &&
+        (mood == _PugMood.working || mood == _PugMood.attention);
+  }
+
+  void _updateMotionLoop(_PugMood mood) {
+    if (!_shouldAnimateContinuously(mood)) {
+      _motionTimer?.cancel();
+      _motionTimer = null;
+      _controller.value = 0;
+      return;
+    }
+    if (_motionTimer != null) {
+      return;
+    }
+    _advanceMotionFrame();
+    _motionTimer = Timer.periodic(
+      const Duration(milliseconds: 120),
+      (_) => _advanceMotionFrame(),
+    );
+  }
+
+  void _advanceMotionFrame() {
+    const cycleMilliseconds = 1600;
+    final elapsed = DateTime.now().millisecondsSinceEpoch % cycleMilliseconds;
+    _controller.value = elapsed / cycleMilliseconds;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final mood = _PugMood.fromTask(widget.task, widget.loading);
+    final mood = _currentMood;
     final avatarPadding = widget.showBubble
         ? math.max(9.0, widget.size * 0.11)
         : math.max(1.0, widget.size * 0.015);
@@ -1877,7 +1992,7 @@ enum _PetfyMascot {
   static const options = [
     _SelectOption(value: 'pug', label: 'Pug'),
     _SelectOption(value: 'lumo', label: 'Lumo'),
-    _SelectOption(value: 'et', label: 'ET'),
+    _SelectOption(value: 'classic-et', label: 'ET'),
   ];
 
   static _PetfyMascot fromStored(Object? value) {
@@ -1990,9 +2105,10 @@ class _PetAvatarImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       mascot.assetPath(mood),
+      cacheWidth: 384,
       fit: BoxFit.contain,
       gaplessPlayback: true,
-      filterQuality: FilterQuality.high,
+      filterQuality: FilterQuality.medium,
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
         if (wasSynchronouslyLoaded || frame != null) {
           return child;
