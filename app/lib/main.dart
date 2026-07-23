@@ -1345,7 +1345,12 @@ class _PetHomePageState extends State<PetHomePage> {
       _PanelView.activity => contentHeight,
       _PanelView.notifications => contentHeight,
       _PanelView.diagnostics => 330.0,
-      _PanelView.settings => 610.0,
+      _PanelView.settings => 350.0,
+      _PanelView.settingsGeneral => 400.0,
+      _PanelView.settingsAppearance => 430.0,
+      _PanelView.settingsNotifications => 470.0,
+      _PanelView.settingsIntegration => 420.0,
+      _PanelView.settingsAdvanced => 390.0,
       _PanelView.eventLog => 430.0,
       _PanelView.debugLog => 430.0,
       _PanelView.setup => 430.0,
@@ -2524,6 +2529,7 @@ class _TaskPopover extends StatelessWidget {
     final isSubScreen =
         view == _PanelView.diagnostics ||
         view == _PanelView.settings ||
+        view.isSettingsDetail ||
         view == _PanelView.eventLog ||
         view == _PanelView.debugLog ||
         view == _PanelView.setup;
@@ -2580,8 +2586,14 @@ class _TaskPopover extends StatelessWidget {
                   children: [
                     if (isSubScreen)
                       IconButton(
-                        tooltip: 'Back to tasks',
-                        onPressed: () => onViewChanged(_PanelView.activity),
+                        tooltip: view.isSettingsDetail
+                            ? 'Back to settings'
+                            : 'Back to tasks',
+                        onPressed: () => onViewChanged(
+                          view.isSettingsDetail
+                              ? _PanelView.settings
+                              : _PanelView.activity,
+                        ),
                         icon: const Icon(Icons.arrow_back, size: 20),
                       ),
                     Expanded(
@@ -2605,10 +2617,17 @@ class _TaskPopover extends StatelessWidget {
                         onPressed: () => onViewChanged(_PanelView.activity),
                         icon: const Icon(Icons.close, size: 20),
                       ),
-                    ] else if (view == _PanelView.settings) ...[
+                    ] else if (view == _PanelView.settings ||
+                        view.isSettingsDetail) ...[
                       IconButton(
-                        tooltip: 'Back to tasks',
-                        onPressed: () => onViewChanged(_PanelView.activity),
+                        tooltip: view.isSettingsDetail
+                            ? 'Back to settings'
+                            : 'Back to tasks',
+                        onPressed: () => onViewChanged(
+                          view.isSettingsDetail
+                              ? _PanelView.settings
+                              : _PanelView.activity,
+                        ),
                         icon: const Icon(Icons.close, size: 20),
                       ),
                     ] else if (view == _PanelView.eventLog) ...[
@@ -2763,6 +2782,12 @@ class _TaskPopover extends StatelessWidget {
                     ] else if (view == _PanelView.settings) ...[
                       _SettingsPanel(
                         colors: colors,
+                        onOpenSection: onViewChanged,
+                      ),
+                    ] else if (view.isSettingsDetail) ...[
+                      _SettingsDetailPanel(
+                        section: view.settingsSection,
+                        colors: colors,
                         soundsEnabled: soundsEnabled,
                         completedSoundEnabled: completedSoundEnabled,
                         attentionSoundEnabled: attentionSoundEnabled,
@@ -2800,6 +2825,7 @@ class _TaskPopover extends StatelessWidget {
                         onCheckForUpdates: onCheckForUpdates,
                         onOpenUpdate: onOpenUpdate,
                         onResetPetPosition: onResetPetPosition,
+                        onOpenDiagnostics: onOpenDiagnostics,
                         onQuit: onQuit,
                       ),
                     ] else ...[
@@ -2846,6 +2872,11 @@ class _TaskPopover extends StatelessWidget {
       _PanelView.notifications => 'Notifications',
       _PanelView.diagnostics => 'Diagnostics',
       _PanelView.settings => 'Settings',
+      _PanelView.settingsGeneral => 'General',
+      _PanelView.settingsAppearance => 'Appearance',
+      _PanelView.settingsNotifications => 'Notifications',
+      _PanelView.settingsIntegration => 'Integration',
+      _PanelView.settingsAdvanced => 'Advanced',
       _PanelView.eventLog => 'Event Log',
       _PanelView.debugLog => 'Debug Log',
       _PanelView.setup => 'Setup',
@@ -2879,9 +2910,34 @@ enum _PanelView {
   notifications,
   diagnostics,
   settings,
+  settingsGeneral,
+  settingsAppearance,
+  settingsNotifications,
+  settingsIntegration,
+  settingsAdvanced,
   eventLog,
   debugLog,
   setup,
+}
+
+extension _PanelViewSettings on _PanelView {
+  bool get isSettingsDetail => switch (this) {
+    _PanelView.settingsGeneral ||
+    _PanelView.settingsAppearance ||
+    _PanelView.settingsNotifications ||
+    _PanelView.settingsIntegration ||
+    _PanelView.settingsAdvanced => true,
+    _ => false,
+  };
+
+  _SettingsSection get settingsSection => switch (this) {
+    _PanelView.settingsGeneral => _SettingsSection.general,
+    _PanelView.settingsAppearance => _SettingsSection.appearance,
+    _PanelView.settingsNotifications => _SettingsSection.notifications,
+    _PanelView.settingsIntegration => _SettingsSection.integration,
+    _PanelView.settingsAdvanced => _SettingsSection.advanced,
+    _ => throw StateError('$this is not a settings detail view.'),
+  };
 }
 
 enum _SettingsAction { diagnostics, eventLog, debugLog, settings, quit }
@@ -3588,8 +3644,138 @@ class _DebugLogTile extends StatelessWidget {
   }
 }
 
+enum _SettingsSection {
+  general,
+  appearance,
+  notifications,
+  integration,
+  advanced,
+}
+
 class _SettingsPanel extends StatelessWidget {
-  const _SettingsPanel({
+  const _SettingsPanel({required this.colors, required this.onOpenSection});
+
+  final PetfyPanelColors colors;
+  final ValueChanged<_PanelView> onOpenSection;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SettingsCategoryTile(
+            colors: colors,
+            icon: Icons.tune,
+            title: 'General',
+            subtitle: 'Startup, position, and app controls.',
+            onTap: () => onOpenSection(_PanelView.settingsGeneral),
+          ),
+          const SizedBox(height: 8),
+          _SettingsCategoryTile(
+            colors: colors,
+            icon: Icons.face,
+            title: 'Appearance',
+            subtitle: 'Mascot, size, animation, and panel style.',
+            onTap: () => onOpenSection(_PanelView.settingsAppearance),
+          ),
+          const SizedBox(height: 8),
+          _SettingsCategoryTile(
+            colors: colors,
+            icon: Icons.notifications_active,
+            title: 'Notifications',
+            subtitle: 'Sounds and automatic notification cleanup.',
+            onTap: () => onOpenSection(_PanelView.settingsNotifications),
+          ),
+          const SizedBox(height: 8),
+          _SettingsCategoryTile(
+            colors: colors,
+            icon: Icons.extension,
+            title: 'Integration',
+            subtitle: 'Codex setup, diagnostics, and updates.',
+            onTap: () => onOpenSection(_PanelView.settingsIntegration),
+          ),
+          const SizedBox(height: 8),
+          _SettingsCategoryTile(
+            colors: colors,
+            icon: Icons.admin_panel_settings,
+            title: 'Advanced',
+            subtitle: 'Event and debug logs for troubleshooting.',
+            onTap: () => onOpenSection(_PanelView.settingsAdvanced),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsCategoryTile extends StatelessWidget {
+  const _SettingsCategoryTile({
+    required this.colors,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final PetfyPanelColors colors;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(7),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: colors.border),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: colors.icon),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: colors.subtleText, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: colors.subtleText),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsDetailPanel extends StatelessWidget {
+  const _SettingsDetailPanel({
+    required this.section,
     required this.colors,
     required this.soundsEnabled,
     required this.completedSoundEnabled,
@@ -3625,9 +3811,11 @@ class _SettingsPanel extends StatelessWidget {
     required this.onCheckForUpdates,
     required this.onOpenUpdate,
     required this.onResetPetPosition,
+    required this.onOpenDiagnostics,
     required this.onQuit,
   });
 
+  final _SettingsSection section;
   final PetfyPanelColors colors;
   final bool soundsEnabled;
   final bool completedSoundEnabled;
@@ -3663,180 +3851,210 @@ class _SettingsPanel extends StatelessWidget {
   final VoidCallback onCheckForUpdates;
   final VoidCallback onOpenUpdate;
   final VoidCallback onResetPetPosition;
+  final VoidCallback onOpenDiagnostics;
   final VoidCallback onQuit;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.volume_up,
-            title: 'Sounds',
-            subtitle: soundsEnabled
-                ? 'Play sounds for enabled event types.'
-                : 'Disable every Petfy sound.',
-            value: soundsEnabled,
-            onChanged: onSoundsChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.check_circle,
-            title: 'Completed sound',
-            subtitle: 'Play a sound when a Codex task finishes.',
-            value: soundsEnabled && completedSoundEnabled,
-            onChanged: soundsEnabled ? onCompletedSoundChanged : null,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.priority_high,
-            title: 'Attention sound',
-            subtitle: 'Play a sound when Codex needs approval or input.',
-            value: soundsEnabled && attentionSoundEnabled,
-            onChanged: soundsEnabled ? onAttentionSoundChanged : null,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.animation,
-            title: 'Animations',
-            subtitle: 'Animate the pet while tasks change state.',
-            value: animationsEnabled,
-            onChanged: onAnimationsEnabledChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSelectTile(
-            colors: colors,
-            icon: Icons.face,
-            title: 'Mascot',
-            value: mascot.id,
-            options: _PetfyMascot.options,
-            onChanged: (value) =>
-                onMascotChanged(_PetfyMascot.fromStored(value)),
-          ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: _sectionItems()),
+    );
+  }
+
+  List<Widget> _sectionItems() {
+    return switch (section) {
+      _SettingsSection.general => [
+        _SettingsSelectTile(
+          colors: colors,
+          icon: Icons.push_pin,
+          title: 'Startup position',
+          value: startupPosition,
+          options: _SelectOption.startupOptions,
+          onChanged: onStartupPositionChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.login,
+          title: 'Launch at login',
+          subtitle: 'Start Petfy automatically for this user.',
+          value: launchAtLoginEnabled,
+          onChanged: onLaunchAtLoginChanged,
+        ),
+        const SizedBox(height: 12),
+        _SettingsActionButton(
+          icon: Icons.center_focus_strong,
+          label: 'Reset pet position',
+          onPressed: onResetPetPosition,
+        ),
+        const SizedBox(height: 8),
+        _SettingsActionButton(
+          icon: Icons.close,
+          label: 'Quit Petfy',
+          onPressed: onQuit,
+        ),
+      ],
+      _SettingsSection.appearance => [
+        _SettingsSelectTile(
+          colors: colors,
+          icon: Icons.face,
+          title: 'Mascot',
+          value: mascot.id,
+          options: _PetfyMascot.options,
+          onChanged: (value) => onMascotChanged(_PetfyMascot.fromStored(value)),
+        ),
+        const SizedBox(height: 8),
+        _SettingsSliderTile(
+          colors: colors,
+          icon: Icons.photo_size_select_large,
+          title: 'Pet size',
+          value: petSize,
+          min: 80,
+          max: 136,
+          divisions: 14,
+          suffix: 'px',
+          onChanged: onPetSizeChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.animation,
+          title: 'Animations',
+          subtitle: 'Animate the pet while tasks change state.',
+          value: animationsEnabled,
+          onChanged: onAnimationsEnabledChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.pets,
+          title: 'Pet bubble',
+          subtitle: showPetBubble
+              ? 'Show the circular background behind the pet.'
+              : 'Show only the pet without the circular background.',
+          value: showPetBubble,
+          onChanged: onShowPetBubbleChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.dark_mode,
+          title: 'Dark panel',
+          subtitle: 'Use a darker shell for the task panel.',
+          value: darkPanel,
+          onChanged: onDarkPanelChanged,
+        ),
+      ],
+      _SettingsSection.notifications => [
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.volume_up,
+          title: 'Sounds',
+          subtitle: soundsEnabled
+              ? 'Play sounds for enabled event types.'
+              : 'Disable every Petfy sound.',
+          value: soundsEnabled,
+          onChanged: onSoundsChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.check_circle,
+          title: 'Completed sound',
+          subtitle: 'Play a sound when a Codex task finishes.',
+          value: soundsEnabled && completedSoundEnabled,
+          onChanged: soundsEnabled ? onCompletedSoundChanged : null,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.priority_high,
+          title: 'Attention sound',
+          subtitle: 'Play a sound when Codex needs approval or input.',
+          value: soundsEnabled && attentionSoundEnabled,
+          onChanged: soundsEnabled ? onAttentionSoundChanged : null,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.auto_delete,
+          title: 'Auto-clear completed',
+          subtitle: autoClearCompleted
+              ? 'Clear completed notifications after $autoClearCompletedAfterMinutes minutes.'
+              : 'Clear old completed notifications automatically.',
+          value: autoClearCompleted,
+          onChanged: onAutoClearCompletedChanged,
+        ),
+        if (autoClearCompleted) ...[
           const SizedBox(height: 8),
           _SettingsSliderTile(
             colors: colors,
-            icon: Icons.photo_size_select_large,
-            title: 'Pet size',
-            value: petSize,
-            min: 80,
-            max: 136,
-            divisions: 14,
-            suffix: 'px',
-            onChanged: onPetSizeChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSelectTile(
-            colors: colors,
-            icon: Icons.push_pin,
-            title: 'Startup position',
-            value: startupPosition,
-            options: _SelectOption.startupOptions,
-            onChanged: onStartupPositionChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.auto_delete,
-            title: 'Auto-clear completed',
-            subtitle: autoClearCompleted
-                ? 'Clear completed notifications after $autoClearCompletedAfterMinutes minutes.'
-                : 'Clear old completed notifications automatically.',
-            value: autoClearCompleted,
-            onChanged: onAutoClearCompletedChanged,
-          ),
-          if (autoClearCompleted) ...[
-            const SizedBox(height: 8),
-            _SettingsSliderTile(
-              colors: colors,
-              icon: Icons.timer,
-              title: 'Auto-clear delay',
-              value: autoClearCompletedAfterMinutes,
-              onChanged: onAutoClearCompletedAfterMinutesChanged,
-            ),
-          ],
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.pets,
-            title: 'Pet bubble',
-            subtitle: showPetBubble
-                ? 'Show the circular background behind the pet.'
-                : 'Show only the pet without the circular background.',
-            value: showPetBubble,
-            onChanged: onShowPetBubbleChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.dark_mode,
-            title: 'Dark panel',
-            subtitle: 'Use a darker shell for the task panel.',
-            value: darkPanel,
-            onChanged: onDarkPanelChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.login,
-            title: 'Launch at login',
-            subtitle: 'Start Petfy automatically for this user.',
-            value: launchAtLoginEnabled,
-            onChanged: onLaunchAtLoginChanged,
-          ),
-          const SizedBox(height: 8),
-          _UpdateSettingsTile(
-            colors: colors,
-            feedUrl: updateFeedUrl,
-            status: updateStatus,
-            checking: checkingForUpdates,
-            onCheck: onCheckForUpdates,
-            onOpen: updateStatus?.canOpen == true ? onOpenUpdate : null,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.receipt_long,
-            title: 'Event Log',
-            subtitle: 'Show raw captured Codex events in the settings menu.',
-            value: showEventLog,
-            onChanged: onShowEventLogChanged,
-          ),
-          const SizedBox(height: 8),
-          _SettingsSwitchTile(
-            colors: colors,
-            icon: Icons.bug_report,
-            title: 'Debug Log',
-            subtitle:
-                'Show local hook, notify, and bridge logs when debugging.',
-            value: showDebugLog,
-            onChanged: onShowDebugLogChanged,
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onResetPetPosition,
-              icon: const Icon(Icons.center_focus_strong, size: 18),
-              label: const Text('Reset pet position'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onQuit,
-              icon: const Icon(Icons.close, size: 18),
-              label: const Text('Quit Petfy'),
-            ),
+            icon: Icons.timer,
+            title: 'Auto-clear delay',
+            value: autoClearCompletedAfterMinutes,
+            onChanged: onAutoClearCompletedAfterMinutesChanged,
           ),
         ],
+      ],
+      _SettingsSection.integration => [
+        _SettingsActionButton(
+          icon: Icons.health_and_safety,
+          label: 'Open diagnostics',
+          onPressed: onOpenDiagnostics,
+        ),
+        const SizedBox(height: 8),
+        _UpdateSettingsTile(
+          colors: colors,
+          feedUrl: updateFeedUrl,
+          status: updateStatus,
+          checking: checkingForUpdates,
+          onCheck: onCheckForUpdates,
+          onOpen: updateStatus?.canOpen == true ? onOpenUpdate : null,
+        ),
+      ],
+      _SettingsSection.advanced => [
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.receipt_long,
+          title: 'Event Log',
+          subtitle: 'Show raw captured Codex events in the settings menu.',
+          value: showEventLog,
+          onChanged: onShowEventLogChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsSwitchTile(
+          colors: colors,
+          icon: Icons.bug_report,
+          title: 'Debug Log',
+          subtitle: 'Show local hook, notify, and bridge logs when debugging.',
+          value: showDebugLog,
+          onChanged: onShowDebugLogChanged,
+        ),
+      ],
+    };
+  }
+}
+
+class _SettingsActionButton extends StatelessWidget {
+  const _SettingsActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
       ),
     );
   }
