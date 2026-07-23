@@ -179,10 +179,10 @@ Completed:
 - [x] Add in-app update check and installer/release handoff.
 - [x] Add checksum-aware update handoff before direct artifact download.
 - [x] Configure the update feed for `github.com/josehenriquefs/petfy`.
+- [x] Publish the initial GitHub commit and `v0.0.1` release, then validate the public update feed.
 
 Active next candidates:
 
-- [ ] Publish the initial GitHub commit and `v0.0.1` release, then validate the public update feed.
 - [ ] Improve Codex integration depth for `task.started` and attention events.
 - [ ] Add a better animated pug mascot asset pipeline.
 - [ ] Improve first-run setup copy and failure recovery.

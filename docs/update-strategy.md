@@ -16,7 +16,7 @@ The updater should be conservative:
 
 ### Phase 1: Update Feed
 
-Status: implemented and configured for `josehenriquefs/petfy`.
+Status: published and validated for `josehenriquefs/petfy`.
 
 Publish a static JSON feed with each release:
 
