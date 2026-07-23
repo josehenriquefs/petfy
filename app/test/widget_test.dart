@@ -24,8 +24,11 @@ void main() {
       'assets/et/et-working.png',
       'assets/et/et-completed.png',
       'assets/et/et-attention.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-2.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-4.png',
     ]) {
       final data = await rootBundle.load(asset);
       expect(data.lengthInBytes, greaterThan(0));

@@ -2007,7 +2007,7 @@ enum _PugMood {
       _PugMood.working => const Duration(milliseconds: 430),
       // The ET completion sequence needs enough time for its intermediate
       // notebook-closing poses to read at a small floating-pet size.
-      _PugMood.completed => const Duration(milliseconds: 950),
+      _PugMood.completed => const Duration(milliseconds: 1350),
       _PugMood.attention => const Duration(milliseconds: 420),
     };
   }
@@ -2094,7 +2094,10 @@ enum _PetfyMascot {
       return const [];
     }
     return const [
+      'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-4.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-2.png',
     ];
   }
@@ -2108,13 +2111,21 @@ enum _PetfyMascot {
         previousMood == _PugMood.working &&
         mood == _PugMood.completed &&
         transitionProgress < 1) {
-      if (transitionProgress < 0.28) {
-        return assetPath(_PugMood.working);
-      }
-      if (transitionProgress < 0.62) {
+      if (transitionProgress < 0.18) {
         return transitionAssetPaths[0];
       }
-      return transitionAssetPaths[1];
+      if (transitionProgress < 0.35) {
+        return transitionAssetPaths[1];
+      }
+      if (transitionProgress < 0.52) {
+        return transitionAssetPaths[2];
+      }
+      if (transitionProgress < 0.70) {
+        return transitionAssetPaths[3];
+      }
+      if (transitionProgress < 0.87) {
+        return transitionAssetPaths[4];
+      }
     }
     return assetPath(mood);
   }

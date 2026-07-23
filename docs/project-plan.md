@@ -190,7 +190,7 @@ Active next candidates:
   - [x] Validated `task.started` and `task.completed` through a real Codex CLI session.
   - [ ] Attention requires a real approval request; CLI validation runs with approval disabled.
 - [x] Add a real frame-sequence mascot animation pipeline with intermediate poses and static fallbacks.
-  - First sequence: classic ET, working to completed, with notebook-closing poses.
+  - First sequence: classic ET, working to completed, with five notebook-closing and approval poses.
 - [ ] Improve first-run setup copy and failure recovery.
 
 Later backlog:
