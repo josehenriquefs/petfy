@@ -7,6 +7,8 @@
 - Pug assets are preloaded and retain a visible fallback during rapid state
   transitions, preventing the mascot from briefly disappearing or stacking
   multiple mood frames.
+- The drawn fallback is now removed as soon as a PNG frame is ready, so it
+  cannot be visible behind transparent areas of the mascot asset.
 - macOS reinstall now stops the existing Petfy process before replacing its
   bundle, preventing a stale process from serving old assets.
 - `UserPromptSubmit` now takes precedence over a generic payload type, so a new
@@ -18,6 +20,8 @@
 
 - Bridge lifecycle tests for started, attention, and completion events.
 - `./pet test-start` for a local Working-state smoke test.
+- A selectable ET mascot with idle, working, completed, and attention states.
+- Persistent mascot choice in Settings; Pug remains the default.
 
 ## v0.0.1 - 2026-07-13
 

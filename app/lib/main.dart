@@ -62,6 +62,7 @@ class _PetHomePageState extends State<PetHomePage> {
   bool _showDebugLog = false;
   bool _showPetBubble = false;
   bool _animationsEnabled = true;
+  _PetfyMascot _mascot = _PetfyMascot.pug;
   int _petSize = 112;
   String _startupPosition = 'remember';
   bool _darkPanel = false;
@@ -123,6 +124,7 @@ class _PetHomePageState extends State<PetHomePage> {
         _showDebugLog = json['showDebugLog'] == true;
         _showPetBubble = json['showPetBubble'] == true;
         _animationsEnabled = json['animationsEnabled'] != false;
+        _mascot = _PetfyMascot.fromStored(json['mascot']);
         _petSize = _readPetSize(json['petSize']);
         _startupPosition = _readStartupPosition(json['startupPosition']);
         _darkPanel = json['darkPanel'] == true;
@@ -156,6 +158,7 @@ class _PetHomePageState extends State<PetHomePage> {
         'showDebugLog': _showDebugLog,
         'showPetBubble': _showPetBubble,
         'animationsEnabled': _animationsEnabled,
+        'mascot': _mascot.id,
         'petSize': _petSize,
         'startupPosition': _startupPosition,
         'darkPanel': _darkPanel,
@@ -192,7 +195,7 @@ class _PetHomePageState extends State<PetHomePage> {
 
   String _readStartupPosition(Object? value) {
     final text = value?.toString();
-    return _StartupPositionOption.isValid(text) ? text! : 'remember';
+    return _SelectOption.isValid(text) ? text! : 'remember';
   }
 
   Future<void> _loadEventLog() async {
@@ -1313,6 +1316,7 @@ class _PetHomePageState extends State<PetHomePage> {
             needsAttention: needsAttention,
             showBubble: _showPetBubble,
             animationsEnabled: _animationsEnabled,
+            mascot: _mascot,
             onTap: _handlePetTap,
             onSecondaryTap: _handlePetSecondaryTap,
             onDragStart: WindowController.beginDrag,
@@ -1410,6 +1414,11 @@ class _PetHomePageState extends State<PetHomePage> {
               setState(() => _animationsEnabled = value);
               _saveSettings();
             },
+            mascot: _mascot,
+            onMascotChanged: (value) {
+              setState(() => _mascot = value);
+              _saveSettings();
+            },
             onPetSizeChanged: (value) {
               setState(() => _petSize = value);
               _saveSettings();
@@ -1480,6 +1489,7 @@ class _FloatingPetButton extends StatefulWidget {
     required this.needsAttention,
     required this.showBubble,
     required this.animationsEnabled,
+    required this.mascot,
     required this.onTap,
     required this.onSecondaryTap,
     required this.onDragStart,
@@ -1493,6 +1503,7 @@ class _FloatingPetButton extends StatefulWidget {
   final bool needsAttention;
   final bool showBubble;
   final bool animationsEnabled;
+  final _PetfyMascot mascot;
   final VoidCallback onTap;
   final VoidCallback onSecondaryTap;
   final VoidCallback onDragStart;
@@ -1533,8 +1544,10 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
       return;
     }
     _assetsPrecached = true;
-    for (final mood in _PugMood.values) {
-      precacheImage(AssetImage(mood.assetPath), context);
+    for (final mascot in _PetfyMascot.values) {
+      for (final mood in _PugMood.values) {
+        precacheImage(AssetImage(mascot.assetPath(mood)), context);
+      }
     }
   }
 
@@ -1638,6 +1651,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
                             child: Padding(
                               padding: EdgeInsets.all(avatarPadding),
                               child: _PetAvatar(
+                                mascot: widget.mascot,
                                 mood: mood,
                                 phase: phase,
                                 animationsEnabled: widget.animationsEnabled,
@@ -1741,12 +1755,12 @@ enum _PugMood {
   completed,
   attention;
 
-  String get assetPath {
+  String get assetName {
     return switch (this) {
-      _PugMood.idle => 'assets/pug/pug-idle.png',
-      _PugMood.working => 'assets/pug/pug-working.png',
-      _PugMood.completed => 'assets/pug/pug-completed.png',
-      _PugMood.attention => 'assets/pug/pug-attention.png',
+      _PugMood.idle => 'idle',
+      _PugMood.working => 'working',
+      _PugMood.completed => 'completed',
+      _PugMood.attention => 'attention',
     };
   }
 
@@ -1848,6 +1862,31 @@ enum _PugMood {
   }
 }
 
+enum _PetfyMascot {
+  pug('pug', 'Pug'),
+  et('et', 'ET');
+
+  const _PetfyMascot(this.id, this.label);
+
+  final String id;
+  final String label;
+
+  static const options = [
+    _SelectOption(value: 'pug', label: 'Pug'),
+    _SelectOption(value: 'et', label: 'ET'),
+  ];
+
+  static _PetfyMascot fromStored(Object? value) {
+    final id = value?.toString();
+    return _PetfyMascot.values.firstWhere(
+      (mascot) => mascot.id == id,
+      orElse: () => _PetfyMascot.pug,
+    );
+  }
+
+  String assetPath(_PugMood mood) => 'assets/$id/$id-${mood.assetName}.png';
+}
+
 class _MoodEntranceTransform {
   const _MoodEntranceTransform({
     required this.offset,
@@ -1898,11 +1937,13 @@ class _Badge extends StatelessWidget {
 
 class _PetAvatar extends StatelessWidget {
   const _PetAvatar({
+    required this.mascot,
     required this.mood,
     required this.phase,
     required this.animationsEnabled,
   });
 
+  final _PetfyMascot mascot;
   final _PugMood mood;
   final double phase;
   final bool animationsEnabled;
@@ -1914,7 +1955,8 @@ class _PetAvatar extends StatelessWidget {
     // moods on top of the current mascot.
     return RepaintBoundary(
       child: _PetAvatarImage(
-        key: ValueKey(mood.assetPath),
+        key: ValueKey(mascot.assetPath(mood)),
+        mascot: mascot,
         mood: mood,
         phase: phase,
       ),
@@ -1923,33 +1965,37 @@ class _PetAvatar extends StatelessWidget {
 }
 
 class _PetAvatarImage extends StatelessWidget {
-  const _PetAvatarImage({super.key, required this.mood, required this.phase});
+  const _PetAvatarImage({
+    super.key,
+    required this.mascot,
+    required this.mood,
+    required this.phase,
+  });
 
+  final _PetfyMascot mascot;
   final _PugMood mood;
   final double phase;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        CustomPaint(
+    return Image.asset(
+      mascot.assetPath(mood),
+      fit: BoxFit.contain,
+      gaplessPlayback: true,
+      filterQuality: FilterQuality.high,
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null) {
+          return child;
+        }
+        return CustomPaint(
           painter: _PetAvatarPainter(mood: mood, phase: phase),
-        ),
-        Image.asset(
-          mood.assetPath,
-          fit: BoxFit.contain,
-          gaplessPlayback: true,
-          filterQuality: FilterQuality.high,
-          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (wasSynchronouslyLoaded || frame != null) {
-              return child;
-            }
-            return const SizedBox.expand();
-          },
-          errorBuilder: (context, error, stackTrace) => const SizedBox.expand(),
-        ),
-      ],
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return CustomPaint(
+          painter: _PetAvatarPainter(mood: mood, phase: phase),
+        );
+      },
     );
   }
 }
@@ -2251,6 +2297,7 @@ class _TaskPopover extends StatelessWidget {
     required this.showDebugLog,
     required this.showPetBubble,
     required this.animationsEnabled,
+    required this.mascot,
     required this.petSize,
     required this.startupPosition,
     required this.darkPanel,
@@ -2276,6 +2323,7 @@ class _TaskPopover extends StatelessWidget {
     required this.onShowDebugLogChanged,
     required this.onShowPetBubbleChanged,
     required this.onAnimationsEnabledChanged,
+    required this.onMascotChanged,
     required this.onPetSizeChanged,
     required this.onStartupPositionChanged,
     required this.onDarkPanelChanged,
@@ -2306,6 +2354,7 @@ class _TaskPopover extends StatelessWidget {
   final bool showDebugLog;
   final bool showPetBubble;
   final bool animationsEnabled;
+  final _PetfyMascot mascot;
   final int petSize;
   final String startupPosition;
   final bool darkPanel;
@@ -2331,6 +2380,7 @@ class _TaskPopover extends StatelessWidget {
   final ValueChanged<bool> onShowDebugLogChanged;
   final ValueChanged<bool> onShowPetBubbleChanged;
   final ValueChanged<bool> onAnimationsEnabledChanged;
+  final ValueChanged<_PetfyMascot> onMascotChanged;
   final ValueChanged<int> onPetSizeChanged;
   final ValueChanged<String> onStartupPositionChanged;
   final ValueChanged<bool> onDarkPanelChanged;
@@ -2597,6 +2647,7 @@ class _TaskPopover extends StatelessWidget {
                         showDebugLog: showDebugLog,
                         showPetBubble: showPetBubble,
                         animationsEnabled: animationsEnabled,
+                        mascot: mascot,
                         petSize: petSize,
                         startupPosition: startupPosition,
                         darkPanel: darkPanel,
@@ -2615,6 +2666,7 @@ class _TaskPopover extends StatelessWidget {
                         onShowDebugLogChanged: onShowDebugLogChanged,
                         onShowPetBubbleChanged: onShowPetBubbleChanged,
                         onAnimationsEnabledChanged: onAnimationsEnabledChanged,
+                        onMascotChanged: onMascotChanged,
                         onPetSizeChanged: onPetSizeChanged,
                         onStartupPositionChanged: onStartupPositionChanged,
                         onDarkPanelChanged: onDarkPanelChanged,
@@ -3422,6 +3474,7 @@ class _SettingsPanel extends StatelessWidget {
     required this.showDebugLog,
     required this.showPetBubble,
     required this.animationsEnabled,
+    required this.mascot,
     required this.petSize,
     required this.startupPosition,
     required this.darkPanel,
@@ -3438,6 +3491,7 @@ class _SettingsPanel extends StatelessWidget {
     required this.onShowDebugLogChanged,
     required this.onShowPetBubbleChanged,
     required this.onAnimationsEnabledChanged,
+    required this.onMascotChanged,
     required this.onPetSizeChanged,
     required this.onStartupPositionChanged,
     required this.onDarkPanelChanged,
@@ -3458,6 +3512,7 @@ class _SettingsPanel extends StatelessWidget {
   final bool showDebugLog;
   final bool showPetBubble;
   final bool animationsEnabled;
+  final _PetfyMascot mascot;
   final int petSize;
   final String startupPosition;
   final bool darkPanel;
@@ -3474,6 +3529,7 @@ class _SettingsPanel extends StatelessWidget {
   final ValueChanged<bool> onShowDebugLogChanged;
   final ValueChanged<bool> onShowPetBubbleChanged;
   final ValueChanged<bool> onAnimationsEnabledChanged;
+  final ValueChanged<_PetfyMascot> onMascotChanged;
   final ValueChanged<int> onPetSizeChanged;
   final ValueChanged<String> onStartupPositionChanged;
   final ValueChanged<bool> onDarkPanelChanged;
@@ -3528,6 +3584,16 @@ class _SettingsPanel extends StatelessWidget {
             onChanged: onAnimationsEnabledChanged,
           ),
           const SizedBox(height: 8),
+          _SettingsSelectTile(
+            colors: colors,
+            icon: Icons.face,
+            title: 'Mascot',
+            value: mascot.id,
+            options: _PetfyMascot.options,
+            onChanged: (value) =>
+                onMascotChanged(_PetfyMascot.fromStored(value)),
+          ),
+          const SizedBox(height: 8),
           _SettingsSliderTile(
             colors: colors,
             icon: Icons.photo_size_select_large,
@@ -3545,7 +3611,7 @@ class _SettingsPanel extends StatelessWidget {
             icon: Icons.push_pin,
             title: 'Startup position',
             value: startupPosition,
-            options: _StartupPositionOption.options,
+            options: _SelectOption.startupOptions,
             onChanged: onStartupPositionChanged,
           ),
           const SizedBox(height: 8),
@@ -3845,19 +3911,19 @@ class _SettingsSwitchTile extends StatelessWidget {
   }
 }
 
-class _StartupPositionOption {
-  const _StartupPositionOption({required this.value, required this.label});
+class _SelectOption {
+  const _SelectOption({required this.value, required this.label});
 
-  static const options = [
-    _StartupPositionOption(value: 'remember', label: 'Remember last position'),
-    _StartupPositionOption(value: 'topRight', label: 'Top right'),
-    _StartupPositionOption(value: 'topLeft', label: 'Top left'),
-    _StartupPositionOption(value: 'bottomRight', label: 'Bottom right'),
-    _StartupPositionOption(value: 'bottomLeft', label: 'Bottom left'),
+  static const startupOptions = [
+    _SelectOption(value: 'remember', label: 'Remember last position'),
+    _SelectOption(value: 'topRight', label: 'Top right'),
+    _SelectOption(value: 'topLeft', label: 'Top left'),
+    _SelectOption(value: 'bottomRight', label: 'Bottom right'),
+    _SelectOption(value: 'bottomLeft', label: 'Bottom left'),
   ];
 
   static bool isValid(String? value) {
-    return options.any((option) => option.value == value);
+    return startupOptions.any((option) => option.value == value);
   }
 
   final String value;
@@ -3878,7 +3944,7 @@ class _SettingsSelectTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
-  final List<_StartupPositionOption> options;
+  final List<_SelectOption> options;
   final ValueChanged<String> onChanged;
 
   @override

@@ -10,12 +10,16 @@ void main() {
     expect(find.text('Codex Tasks'), findsNothing);
   });
 
-  testWidgets('packages every pug mood asset', (WidgetTester tester) async {
+  testWidgets('packages every mascot mood asset', (WidgetTester tester) async {
     for (final asset in const [
       'assets/pug/pug-idle.png',
       'assets/pug/pug-working.png',
       'assets/pug/pug-completed.png',
       'assets/pug/pug-attention.png',
+      'assets/et/et-idle.png',
+      'assets/et/et-working.png',
+      'assets/et/et-completed.png',
+      'assets/et/et-attention.png',
     ]) {
       final data = await rootBundle.load(asset);
       expect(data.lengthInBytes, greaterThan(0));

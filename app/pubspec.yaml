@@ -62,6 +62,10 @@ flutter:
     - assets/pug/pug-working.png
     - assets/pug/pug-completed.png
     - assets/pug/pug-attention.png
+    - assets/et/et-idle.png
+    - assets/et/et-working.png
+    - assets/et/et-completed.png
+    - assets/et/et-attention.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
