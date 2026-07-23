@@ -1751,7 +1751,9 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
       return false;
     }
     if (widget.mascot.hasPoseAnimations) {
-      return mood == _PugMood.idle || mood == _PugMood.working;
+      return mood == _PugMood.idle ||
+          mood == _PugMood.working ||
+          mood == _PugMood.completed;
     }
     return mood == _PugMood.working || mood == _PugMood.attention;
   }
@@ -1801,7 +1803,9 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
         final useIdlePoseLoop =
             widget.animationsEnabled &&
             widget.mascot.hasPoseAnimations &&
-            (mood == _PugMood.idle || mood == _PugMood.working);
+            (mood == _PugMood.idle ||
+                mood == _PugMood.working ||
+                mood == _PugMood.completed);
         final phase = usePhysicalMotion || useIdlePoseLoop
             ? _controller.value
             : 0.0;
@@ -2128,6 +2132,8 @@ enum _PetfyMascot {
         'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
         'assets/et/sequence/working-loop/et-working-loop-1.png',
         'assets/et/sequence/working-loop/et-working-loop-2.png',
+        'assets/et/sequence/completed-loop/et-completed-loop-1.png',
+        'assets/et/sequence/completed-loop/et-completed-loop-2.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
@@ -2142,6 +2148,8 @@ enum _PetfyMascot {
         'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-2.png',
         'assets/lumo/sequence/working-loop/lumo-working-loop-1.png',
         'assets/lumo/sequence/working-loop/lumo-working-loop-2.png',
+        'assets/lumo/sequence/completed-loop/lumo-completed-loop-1.png',
+        'assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png',
       ],
       _PetfyMascot.pug => const [],
     };
@@ -2298,6 +2306,24 @@ enum _PetfyMascot {
         return 'assets/lumo/sequence/working-loop/lumo-working-loop-2.png';
       }
       return 'assets/lumo/lumo-working.png';
+    }
+    if (this == _PetfyMascot.et && mood == _PugMood.completed) {
+      if (phase >= 0.84 && phase < 0.88 || phase >= 0.92 && phase < 0.96) {
+        return 'assets/et/sequence/completed-loop/et-completed-loop-1.png';
+      }
+      if (phase >= 0.88 && phase < 0.92) {
+        return 'assets/et/sequence/completed-loop/et-completed-loop-2.png';
+      }
+      return 'assets/et/et-completed.png';
+    }
+    if (this == _PetfyMascot.lumo && mood == _PugMood.completed) {
+      if (phase >= 0.84 && phase < 0.88 || phase >= 0.92 && phase < 0.96) {
+        return 'assets/lumo/sequence/completed-loop/lumo-completed-loop-1.png';
+      }
+      if (phase >= 0.88 && phase < 0.92) {
+        return 'assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png';
+      }
+      return 'assets/lumo/lumo-completed.png';
     }
     return assetPath(mood);
   }

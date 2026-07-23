@@ -73,6 +73,8 @@ flutter:
     - assets/lumo/sequence/working-to-completed/lumo-working-to-completed-2.png
     - assets/lumo/sequence/working-loop/lumo-working-loop-1.png
     - assets/lumo/sequence/working-loop/lumo-working-loop-2.png
+    - assets/lumo/sequence/completed-loop/lumo-completed-loop-1.png
+    - assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png
     - assets/et/et-idle.png
     - assets/et/et-working.png
     - assets/et/et-completed.png
@@ -84,6 +86,8 @@ flutter:
     - assets/et/sequence/idle-loop/et-idle-loop-wave.png
     - assets/et/sequence/working-loop/et-working-loop-1.png
     - assets/et/sequence/working-loop/et-working-loop-2.png
+    - assets/et/sequence/completed-loop/et-completed-loop-1.png
+    - assets/et/sequence/completed-loop/et-completed-loop-2.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-0.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-1.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-2.png
