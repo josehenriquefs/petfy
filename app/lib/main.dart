@@ -1744,6 +1744,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
 
   bool _shouldAnimateContinuously(_PugMood mood) {
     return widget.animationsEnabled &&
+        widget.mascot != _PetfyMascot.et &&
         (mood == _PugMood.working || mood == _PugMood.attention);
   }
 
@@ -1781,21 +1782,26 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     return AnimatedBuilder(
       animation: Listenable.merge([_controller, _transitionController]),
       builder: (context, child) {
-        final phase = widget.animationsEnabled ? _controller.value : 0.0;
-        final entrance = widget.animationsEnabled
+        // ET movement is conveyed by authored pose sequences. Do not add the
+        // generic bob/rotation on top, which makes those transitions read as
+        // shaking rather than character motion.
+        final usePhysicalMotion =
+            widget.animationsEnabled && widget.mascot != _PetfyMascot.et;
+        final phase = usePhysicalMotion ? _controller.value : 0.0;
+        final entrance = usePhysicalMotion
             ? mood.entranceTransform(
                 _transitionController.value,
                 from: _previousMood,
               )
             : _MoodEntranceTransform.none;
-        final bob = widget.animationsEnabled ? mood.verticalOffset(phase) : 0.0;
-        final pulse = widget.animationsEnabled
+        final bob = usePhysicalMotion ? mood.verticalOffset(phase) : 0.0;
+        final pulse = usePhysicalMotion
             ? widget.needsAttention
                   ? 1.0 + (math.sin(phase * math.pi * 4).abs() * 0.025)
                   : mood.scale(phase)
             : 1.0;
-        final rotation = widget.animationsEnabled ? mood.rotation(phase) : 0.0;
-        final horizontalOffset = widget.animationsEnabled
+        final rotation = usePhysicalMotion ? mood.rotation(phase) : 0.0;
+        final horizontalOffset = usePhysicalMotion
             ? mood.horizontalOffset(phase)
             : 0.0;
 
@@ -2255,19 +2261,37 @@ class _PetAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Keep one frame mounted at a time. ET can select an intermediate frame
-    // for working -> completed; every other mascot/state uses its static pose.
+    // ET selects authored intermediate poses. A brief, clipped cross-fade
+    // removes hard frame cuts without leaving stale mascot layers behind.
     final assetPath = mascot.displayAssetPath(
       mood: mood,
       previousMood: previousMood,
       transitionProgress: transitionProgress,
     );
     return RepaintBoundary(
-      child: _PetAvatarImage(
-        key: ValueKey(assetPath),
-        assetPath: assetPath,
-        mood: mood,
-        phase: phase,
+      child: AnimatedSwitcher(
+        duration: mascot == _PetfyMascot.et && animationsEnabled
+            ? const Duration(milliseconds: 110)
+            : Duration.zero,
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        layoutBuilder: (currentChild, previousChildren) {
+          return ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [...previousChildren, ?currentChild],
+            ),
+          );
+        },
+        transitionBuilder: (child, animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        child: _PetAvatarImage(
+          key: ValueKey(assetPath),
+          assetPath: assetPath,
+          mood: mood,
+          phase: phase,
+        ),
       ),
     );
   }
