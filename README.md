@@ -6,6 +6,13 @@ Petfy is a small Flutter desktop app that stays above your windows, listens for 
 
 Current version: `v0.0.1`
 
+## Project Documents
+
+- [Current status and resume checklist](docs/current-status.md)
+- [Roadmap checklist](docs/roadmap-checklist.md)
+- [Event contract](docs/event-contract.md)
+- [Distribution strategy](docs/distribution-strategy.md)
+
 Petfy is an independent project and is not affiliated with, endorsed by, or sponsored by OpenAI.
 
 ## Current Status

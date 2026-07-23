@@ -1,5 +1,9 @@
 # Project Plan
 
+For the operational project snapshot and the next prioritized tasks, see
+[`current-status.md`](current-status.md). This document retains the broader
+product history and long-term plan.
+
 ## Working Objective
 
 Build a polished, installable desktop pet for Codex users that surfaces task completion, required attention, and optionally running tasks across Codex CLI, Codex Desktop, and the VS Code extension.
