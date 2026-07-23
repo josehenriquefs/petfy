@@ -65,12 +65,12 @@ function inferSource(rawEvent, env) {
 
 function getEventType(rawEvent, env) {
   return (
+    env.PETFY_EVENT_TYPE ||
     rawEvent.type ||
     rawEvent.hook_event_name ||
     rawEvent.hookEventName ||
     rawEvent.event ||
     rawEvent.name ||
-    env.PETFY_EVENT_TYPE ||
     "agent-turn-complete"
   );
 }

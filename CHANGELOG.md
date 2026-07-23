@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `UserPromptSubmit` now takes precedence over a generic payload type, so a new
+  task is recorded as `Working` rather than `Completed`.
+- Task reconciliation now resolves lifecycle events per turn before workspace,
+  avoiding stale activity and hiding valid completions from other turns.
+
+### Added
+
+- Bridge lifecycle tests for started, attention, and completion events.
+- `./pet test-start` for a local Working-state smoke test.
+
 ## v0.0.1 - 2026-07-13
 
 First local MVP.

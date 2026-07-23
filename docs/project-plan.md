@@ -183,7 +183,7 @@ Completed:
 
 Active next candidates:
 
-- [ ] Improve Codex integration depth for `task.started` and attention events.
+- [ ] Validate `task.started` and attention events in real VS Code and CLI sessions.
 - [ ] Add a better animated pug mascot asset pipeline.
 - [ ] Improve first-run setup copy and failure recovery.
 
@@ -298,7 +298,6 @@ Windows:
 ## Current Risks
 
 - Codex hook trust behavior is not fully documented in this repo.
-- `Notification` and `UserPromptSubmit` need real-world validation.
+- `Notification` and `UserPromptSubmit` need real-world validation in every Codex surface.
 - The current app is macOS-first despite Flutter scaffolding for Windows/Linux.
-- Some scripts still contain local absolute paths from the prototype phase.
 - Public distribution will require packaging and signing decisions.

@@ -604,23 +604,11 @@ class _PetHomePageState extends State<PetHomePage> {
 
     events.sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
 
-    final activeWorkspaces = events
-        .where((event) => event.isActive && event.cwd.isNotEmpty)
-        .map((event) => event.cwd)
-        .toSet();
     final distinct = <String, CodexPetEvent>{};
-    final completedWorkspaces = <String>{};
     for (final event in events) {
-      if (event.type == 'task.completed' &&
-          activeWorkspaces.contains(event.cwd)) {
-        continue;
-      }
-      if (event.type == 'task.completed' && event.cwd.isNotEmpty) {
-        completedWorkspaces.add(event.cwd);
-      }
-      if (event.needsAttention && completedWorkspaces.contains(event.cwd)) {
-        continue;
-      }
+      // Events are newest first. A later event for the same turn resolves an
+      // older working or approval state without affecting other turns in the
+      // same workspace.
       distinct.putIfAbsent(event.taskKey, () => event);
     }
 
@@ -4304,13 +4292,13 @@ class CodexPetEvent {
   final String? turnId;
 
   String get taskKey {
-    if (threadId != null && threadId!.isNotEmpty) {
-      return threadId!;
-    }
     if (turnId != null && turnId!.isNotEmpty) {
-      return turnId!;
+      return 'turn:$turnId';
     }
-    return cwd.isNotEmpty ? cwd : '$projectName:$timestamp';
+    if (threadId != null && threadId!.isNotEmpty) {
+      return 'thread:$threadId';
+    }
+    return cwd.isNotEmpty ? 'workspace:$cwd' : '$projectName:$timestamp';
   }
 
   String get soundKey => '$taskKey:$type:$timestamp:$message';

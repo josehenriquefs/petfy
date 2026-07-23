@@ -22,9 +22,13 @@ The Flutter app should consume normalized Codex Pet events, not raw Codex hook p
 ## Initial Event Types
 
 - `task.completed`: Codex finished an agent turn.
-- `task.started`: reserved for lifecycle hooks.
-- `task.waiting_approval`: reserved for approval hooks.
+- `task.started`: emitted from `UserPromptSubmit` and active-session discovery.
+- `task.waiting_approval`: emitted from the `Notification` lifecycle hook.
 - `codex.<rawType>`: fallback for unmapped Codex event types.
+
+When a lifecycle hook provides an explicit type, Petfy treats it as
+authoritative even if the attached payload contains another generic `type`.
+That keeps a prompt submission from being misclassified as completion.
 
 ## Transport
 

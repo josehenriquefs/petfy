@@ -10,6 +10,7 @@
   "scripts": {
     "bridge": "npm --workspace bridge run start",
     "bridge:test-event": "npm --workspace bridge run test:event",
+    "test:bridge": "node --test bridge/test/*.test.js",
     "release:manifest": "node scripts/release-manifest.js",
     "update:manifest": "node scripts/update-manifest.js"
   }
