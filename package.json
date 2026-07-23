@@ -1,0 +1,16 @@
+{
+  "name": "petfy",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Multiplatform desktop pet for Codex task events.",
+  "workspaces": [
+    "bridge"
+  ],
+  "scripts": {
+    "bridge": "npm --workspace bridge run start",
+    "bridge:test-event": "npm --workspace bridge run test:event",
+    "release:manifest": "node scripts/release-manifest.js",
+    "update:manifest": "node scripts/update-manifest.js"
+  }
+}

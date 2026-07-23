@@ -1,0 +1,332 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "$0")" && pwd)"
+flutter="$repo_root/scripts/flutter-local"
+state_dir="${PETFY_STATE_DIR:-$HOME/.petfy}"
+node_path="${PETFY_NODE_PATH:-$(command -v node || true)}"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./pet open         Open this project in VS Code
+  ./pet dev          Run the Flutter app on macOS
+  ./pet dev-linux    Run the Flutter app on Linux
+  ./pet dev-windows  Run the Flutter app on Windows
+  ./pet analyze      Run Flutter analyzer
+  ./pet test         Run Flutter tests
+  ./pet clean        Clean Flutter build artifacts
+  ./pet test-event   Generate a sample Codex completion event
+  ./pet demo-events  Generate sample multi-task events
+  ./pet test-hook    Generate a sample Codex hook completion event
+  ./pet test-attn    Generate a sample Codex attention event
+  ./pet icons        Generate Petfy macOS app icons
+  ./pet install-codex Install Codex hooks for real events
+  ./pet install-app  Install macOS app and LaunchAgent
+  ./pet install-linux Install Linux app, desktop entry, and autostart
+  ./pet install-windows Install Windows app and startup shortcut
+  ./pet package-macos Build a local macOS shareable package
+  ./pet package-linux Build a local Linux shareable package
+  ./pet package-windows Build a local Windows shareable package
+  ./pet release-manifest Show expected release artifacts and checksums
+  ./pet update-manifest Generate update feed metadata
+  ./pet package-macos-signed Build signed/notarized macOS package
+  ./pet start-app    Start installed macOS app
+  ./pet start-linux  Start installed Linux app
+  ./pet start-windows Start installed Windows app
+  ./pet stop-app     Stop installed macOS app
+  ./pet stop-linux   Stop installed Linux app
+  ./pet stop-windows Stop installed Windows app
+  ./pet uninstall-app Remove installed macOS app and LaunchAgent
+  ./pet uninstall-linux Remove installed Linux app and autostart
+  ./pet uninstall-windows Remove installed Windows app and startup shortcut
+  ./pet clear        Clear active Pet notifications
+  ./pet latest       Print the latest saved event
+  ./pet bridge       Start the bridge placeholder
+  ./pet doctor       Show Petfy install status
+  ./pet doctor-linux Show Petfy Linux install status
+  ./pet doctor-windows Show Petfy Windows install status
+  ./pet flutter-doctor Show Flutter doctor output
+  ./pet version      Show local Flutter version
+
+EOF
+}
+
+command="${1:-help}"
+
+case "$command" in
+  open)
+    if command -v code >/dev/null 2>&1; then
+      code --new-window "$repo_root"
+    else
+      echo "VS Code CLI 'code' was not found."
+      echo "Install it from VS Code: Command Palette > Shell Command: Install 'code' command in PATH"
+      exit 1
+    fi
+    ;;
+  dev)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" run -d macos \
+      --dart-define="PETFY_ROOT=$repo_root" \
+      --dart-define="PETFY_STATE_DIR=$state_dir" \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    ;;
+  dev-linux)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" run -d linux \
+      --dart-define="PETFY_ROOT=$repo_root" \
+      --dart-define="PETFY_STATE_DIR=$state_dir" \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    ;;
+  dev-windows)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" run -d windows \
+      --dart-define="PETFY_ROOT=$repo_root" \
+      --dart-define="PETFY_STATE_DIR=$state_dir" \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    ;;
+  analyze)
+    cd "$repo_root/app"
+    "$flutter" analyze
+    ;;
+  test)
+    cd "$repo_root/app"
+    "$flutter" test
+    ;;
+  clean)
+    cd "$repo_root/app"
+    "$flutter" clean
+    ;;
+  test-event)
+    cd "$repo_root"
+    PETFY_STATE_DIR="$state_dir" npm run bridge:test-event
+    ;;
+  demo-events)
+    cd "$repo_root"
+    PETFY_STATE_DIR="$state_dir" node bridge/src/cli.js notify '{"type":"agent-turn-complete","cwd":"/Users/josehenriquefs/development/example-project","thread-id":"thread_done","turn-id":"turn_done","last-assistant-message":"Tarefa concluida."}'
+    PETFY_STATE_DIR="$state_dir" node bridge/src/cli.js notify '{"type":"approval-requested","cwd":"/Users/josehenriquefs/development/reeduca-web","thread-id":"thread_approval","turn-id":"turn_approval","message":"Aguardando aprovacao para executar comando."}'
+    ;;
+  test-hook)
+    cd "$repo_root"
+    PETFY_STATE_DIR="$state_dir" scripts/petfy-event.sh Stop '{"hook_event_name":"Stop","cwd":"/Users/josehenriquefs/development/example-project","thread_id":"thread_hook","message":"Hook de termino recebido."}'
+    ;;
+  test-attn)
+    cd "$repo_root"
+    PETFY_STATE_DIR="$state_dir" scripts/petfy-event.sh Notification '{"hook_event_name":"Notification","cwd":"/Users/josehenriquefs/development/reeduca-web","thread_id":"thread_attention","message":"Codex precisa de aprovacao ou interacao."}'
+    ;;
+  icons)
+    cd "$repo_root"
+    node scripts/generate-petfy-icons.js
+    ;;
+  install-codex)
+    cd "$repo_root"
+    node scripts/install-codex-integration.js
+    chmod +x scripts/petfy-event.sh
+    chmod +x scripts/petfy-notify.sh
+    ;;
+  install-app)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root"
+    node scripts/generate-petfy-icons.js
+    cd "$repo_root/app"
+    "$flutter" build macos --release \
+      --dart-define="PETFY_ROOT=$repo_root" \
+      --dart-define="PETFY_STATE_DIR=$state_dir" \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/macos-app.js install
+    ;;
+  install-linux)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" build linux --release \
+      --dart-define="PETFY_ROOT=$HOME/.local/share/petfy" \
+      --dart-define="PETFY_STATE_DIR=$state_dir" \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/linux-app.js install
+    ;;
+  install-windows)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" build windows --release \
+      --dart-define="PETFY_ROOT=%LOCALAPPDATA%\\Petfy" \
+      --dart-define="PETFY_STATE_DIR=%USERPROFILE%\\.petfy" \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/windows-app.js install
+    ;;
+  package-macos)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root"
+    node scripts/generate-petfy-icons.js
+    cd "$repo_root/app"
+    "$flutter" build macos --release \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/package-macos.js
+    ;;
+  package-linux)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" build linux --release \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/package-linux.js
+    ;;
+  package-windows)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root/app"
+    "$flutter" build windows --release \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/package-windows.js
+    ;;
+  release-manifest)
+    cd "$repo_root"
+    node scripts/release-manifest.js
+    ;;
+  update-manifest)
+    cd "$repo_root"
+    node scripts/update-manifest.js
+    ;;
+  package-macos-signed)
+    if [ -z "$node_path" ]; then
+      echo "Node.js was not found in PATH."
+      exit 1
+    fi
+    cd "$repo_root"
+    node scripts/generate-petfy-icons.js
+    cd "$repo_root/app"
+    "$flutter" build macos --release \
+      --dart-define="PETFY_NODE_PATH=$node_path"
+    cd "$repo_root"
+    node scripts/package-macos.js --signed --notarize
+    ;;
+  start-app)
+    cd "$repo_root"
+    node scripts/macos-app.js start
+    ;;
+  stop-app)
+    cd "$repo_root"
+    node scripts/macos-app.js stop
+    ;;
+  start-linux)
+    cd "$repo_root"
+    node scripts/linux-app.js start
+    ;;
+  start-windows)
+    cd "$repo_root"
+    node scripts/windows-app.js start
+    ;;
+  stop-linux)
+    cd "$repo_root"
+    node scripts/linux-app.js stop
+    ;;
+  stop-windows)
+    cd "$repo_root"
+    node scripts/windows-app.js stop
+    ;;
+  uninstall-linux)
+    cd "$repo_root"
+    node scripts/linux-app.js uninstall
+    ;;
+  uninstall-windows)
+    cd "$repo_root"
+    node scripts/windows-app.js uninstall
+    ;;
+  doctor-linux)
+    cd "$repo_root"
+    node scripts/linux-app.js status
+    ;;
+  doctor-windows)
+    cd "$repo_root"
+    node scripts/windows-app.js status
+    ;;
+  uninstall-app)
+    cd "$repo_root"
+    node scripts/macos-app.js uninstall
+    ;;
+  clear)
+    mkdir -p "$state_dir"
+    rm -f "$state_dir/latest-event.json" "$state_dir/events.jsonl"
+    echo "Cleared Petfy notifications from $state_dir"
+    ;;
+  latest)
+    latest="$state_dir/latest-event.json"
+    if [ -f "$latest" ]; then
+      cat "$latest"
+      echo
+    else
+      echo "No latest event yet. Waiting for real Codex events."
+      exit 1
+    fi
+    ;;
+  bridge)
+    cd "$repo_root"
+    npm run bridge
+    ;;
+  doctor)
+    cd "$repo_root"
+    node scripts/macos-app.js status
+    echo
+    if [ -f "$HOME/.codex/hooks.json" ]; then
+      echo "Codex hooks:"
+      grep -n "petfy" "$HOME/.codex/hooks.json" || true
+    else
+      echo "Missing Codex hooks file: $HOME/.codex/hooks.json"
+    fi
+    echo
+    if [ -f "$HOME/.codex/config.toml" ]; then
+      echo "Codex notify:"
+      grep -n "petfy-notify" "$HOME/.codex/config.toml" || true
+    else
+      echo "Missing Codex config file: $HOME/.codex/config.toml"
+    fi
+    ;;
+  flutter-doctor)
+    "$flutter" doctor
+    ;;
+  version)
+    "$flutter" --version
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command"
+    echo
+    usage
+    exit 1
+    ;;
+esac

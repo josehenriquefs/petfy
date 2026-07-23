@@ -1,0 +1,49 @@
+{
+  "product": "Petfy",
+  "version": "0.0.1",
+  "tag": "v0.0.1",
+  "artifacts": [
+    {
+      "os": "macos",
+      "arch": "universal",
+      "currentName": "Petfy-macos-v0.0.1.zip",
+      "targetName": "Petfy-macos-universal-v0.0.1.zip",
+      "format": "zip",
+      "installer": "install.command",
+      "diagnostics": "diagnostics.command",
+      "uninstall": "uninstall.command",
+      "status": "built-on-macos",
+      "notes": "Ad-hoc signed local package. Public release should be Developer ID signed and notarized."
+    },
+    {
+      "os": "windows",
+      "arch": "x64",
+      "currentName": "Petfy-windows-x64-v0.0.1.zip",
+      "targetName": "Petfy-windows-x64-v0.0.1.zip",
+      "format": "zip",
+      "installer": "install.cmd",
+      "diagnostics": "diagnostics.cmd",
+      "uninstall": "uninstall.cmd",
+      "status": "script-ready-needs-windows-validation",
+      "notes": "Portable zip first. Public release should move to a signed installer."
+    },
+    {
+      "os": "linux",
+      "arch": "x64",
+      "currentName": "Petfy-linux-x64-v0.0.1.tar.gz",
+      "targetName": "Petfy-linux-x64-v0.0.1.tar.gz",
+      "format": "tar.gz",
+      "installer": "install.sh",
+      "diagnostics": "diagnostics.sh",
+      "uninstall": "uninstall.sh",
+      "status": "script-ready-needs-linux-validation",
+      "notes": "Tarball first. Public release should add AppImage."
+    }
+  ],
+  "futureArtifacts": [
+    "Petfy-macos-universal-v0.0.1.dmg",
+    "Petfy-windows-x64-v0.0.1.exe",
+    "Petfy-linux-x64-v0.0.1.AppImage",
+    "Petfy-linux-amd64-v0.0.1.deb"
+  ]
+}

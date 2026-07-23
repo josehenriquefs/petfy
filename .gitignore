@@ -1,0 +1,14 @@
+# macOS metadata
+.DS_Store
+
+# Local Flutter SDK and generated build output
+.tooling/
+app/.dart_tool/
+app/build/
+
+# Local release artifacts and scratch files. The feed itself is versioned so
+# public builds can fetch it from GitHub's raw content URL.
+dist/*
+!dist/update/
+!dist/update/latest.json
+work/

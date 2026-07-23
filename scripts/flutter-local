@@ -1,0 +1,11 @@
+#!/bin/zsh
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+export PATH="$repo_root/.tooling/flutter/bin:$PATH"
+export HOME="$repo_root/.tooling/home"
+export PUB_CACHE="$repo_root/.tooling/pub-cache"
+export XDG_CONFIG_HOME="$repo_root/.tooling/config"
+
+exec flutter "$@"

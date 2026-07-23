@@ -1,0 +1,7 @@
+# Example Codex config.
+# Replace /path/to/petfy with the location of your local clone.
+
+notify = [
+  "zsh",
+  "/path/to/petfy/examples/codex-done-bridge.sh"
+]

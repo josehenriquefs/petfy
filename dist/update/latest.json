@@ -1,0 +1,53 @@
+{
+  "product": "Petfy",
+  "version": "0.0.1",
+  "tag": "v0.0.1",
+  "mandatory": false,
+  "minimumSupportedVersion": "0.0.1",
+  "releaseNotesUrl": "https://github.com/josehenriquefs/petfy/releases/tag/v0.0.1",
+  "generatedAt": "2026-07-23T15:23:40.718Z",
+  "artifacts": [
+    {
+      "os": "macos",
+      "arch": "universal",
+      "name": "Petfy-macos-universal-v0.0.1.zip",
+      "currentName": "Petfy-macos-v0.0.1.zip",
+      "format": "zip",
+      "installer": "install.command",
+      "diagnostics": "diagnostics.command",
+      "uninstall": "uninstall.command",
+      "url": "https://github.com/josehenriquefs/petfy/releases/download/v0.0.1/Petfy-macos-universal-v0.0.1.zip",
+      "sha256": "d4be791881fc80b8209ffc05e599122569edd59783aec7bbf61b3db36bc86d95",
+      "status": "built-on-macos",
+      "notes": "Ad-hoc signed local package. Public release should be Developer ID signed and notarized."
+    },
+    {
+      "os": "windows",
+      "arch": "x64",
+      "name": "Petfy-windows-x64-v0.0.1.zip",
+      "currentName": "Petfy-windows-x64-v0.0.1.zip",
+      "format": "zip",
+      "installer": "install.cmd",
+      "diagnostics": "diagnostics.cmd",
+      "uninstall": "uninstall.cmd",
+      "url": "https://github.com/josehenriquefs/petfy/releases/download/v0.0.1/Petfy-windows-x64-v0.0.1.zip",
+      "sha256": "",
+      "status": "script-ready-needs-windows-validation",
+      "notes": "Portable zip first. Public release should move to a signed installer."
+    },
+    {
+      "os": "linux",
+      "arch": "x64",
+      "name": "Petfy-linux-x64-v0.0.1.tar.gz",
+      "currentName": "Petfy-linux-x64-v0.0.1.tar.gz",
+      "format": "tar.gz",
+      "installer": "install.sh",
+      "diagnostics": "diagnostics.sh",
+      "uninstall": "uninstall.sh",
+      "url": "https://github.com/josehenriquefs/petfy/releases/download/v0.0.1/Petfy-linux-x64-v0.0.1.tar.gz",
+      "sha256": "",
+      "status": "script-ready-needs-linux-validation",
+      "notes": "Tarball first. Public release should add AppImage."
+    }
+  ]
+}

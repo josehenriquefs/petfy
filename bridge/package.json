@@ -1,0 +1,15 @@
+{
+  "name": "@petfy/bridge",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "petfy-bridge": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node ./src/cli.js serve",
+    "notify": "node ./src/cli.js notify",
+    "test:event": "node ./src/cli.js notify '{\"type\":\"agent-turn-complete\",\"cwd\":\"/Users/josehenriquefs/development/example-project\",\"thread-id\":\"thread_demo\",\"turn-id\":\"turn_demo\",\"last-assistant-message\":\"Tarefa de exemplo concluida.\"}'"
+  },
+  "dependencies": {}
+}
