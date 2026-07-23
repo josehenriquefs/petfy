@@ -62,6 +62,10 @@ flutter:
     - assets/pug/pug-working.png
     - assets/pug/pug-completed.png
     - assets/pug/pug-attention.png
+    - assets/lumo/lumo-idle.png
+    - assets/lumo/lumo-working.png
+    - assets/lumo/lumo-completed.png
+    - assets/lumo/lumo-attention.png
     - assets/et/et-idle.png
     - assets/et/et-working.png
     - assets/et/et-completed.png

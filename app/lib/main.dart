@@ -1864,27 +1864,37 @@ enum _PugMood {
 
 enum _PetfyMascot {
   pug('pug', 'Pug'),
-  et('et', 'ET');
+  lumo('lumo', 'Lumo'),
+  et('classic-et', 'ET', assetId: 'et');
 
-  const _PetfyMascot(this.id, this.label);
+  const _PetfyMascot(this.id, this.label, {String? assetId})
+    : assetId = assetId ?? id;
 
   final String id;
   final String label;
+  final String assetId;
 
   static const options = [
     _SelectOption(value: 'pug', label: 'Pug'),
+    _SelectOption(value: 'lumo', label: 'Lumo'),
     _SelectOption(value: 'et', label: 'ET'),
   ];
 
   static _PetfyMascot fromStored(Object? value) {
     final id = value?.toString();
+    // The first alternate mascot used the `et` preference id. Preserve that
+    // selection now that the classic ET has its own stable id.
+    if (id == 'et') {
+      return _PetfyMascot.lumo;
+    }
     return _PetfyMascot.values.firstWhere(
       (mascot) => mascot.id == id,
       orElse: () => _PetfyMascot.pug,
     );
   }
 
-  String assetPath(_PugMood mood) => 'assets/$id/$id-${mood.assetName}.png';
+  String assetPath(_PugMood mood) =>
+      'assets/$assetId/$assetId-${mood.assetName}.png';
 }
 
 class _MoodEntranceTransform {

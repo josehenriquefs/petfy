@@ -180,7 +180,7 @@ Completed:
 - [x] Add checksum-aware update handoff before direct artifact download.
 - [x] Configure the update feed for `github.com/josehenriquefs/petfy`.
 - [x] Publish the initial GitHub commit and `v0.0.1` release, then validate the public update feed.
-- [x] Add multiple mascot support, beginning with the ET mascot and a user-facing selector.
+- [x] Add multiple mascot support with Pug, Lumo, and a classic ET, plus a user-facing selector.
 
 Active next candidates:
 

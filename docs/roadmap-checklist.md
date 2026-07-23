@@ -66,7 +66,7 @@ This checklist tracks the next product improvements. Mark items as done when the
 - [ ] macOS code signing and notarization.
 - [ ] GitHub release workflow.
 - [ ] Export/import settings.
-- [ ] Multiple mascots, including alternate ET character.
+- [x] Multiple mascots: Pug, Lumo, and a classic ET character.
 
 ## Suggested After Current Item
 
