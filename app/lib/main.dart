@@ -1746,7 +1746,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     if (!widget.animationsEnabled) {
       return false;
     }
-    if (widget.mascot == _PetfyMascot.et) {
+    if (widget.mascot.hasPoseAnimations) {
       return mood == _PugMood.idle;
     }
     return mood == _PugMood.working || mood == _PugMood.attention;
@@ -1770,7 +1770,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   }
 
   void _advanceMotionFrame() {
-    final cycleMilliseconds = widget.mascot == _PetfyMascot.et ? 3000 : 1600;
+    final cycleMilliseconds = widget.mascot.hasPoseAnimations ? 3000 : 1600;
     final elapsed = DateTime.now().millisecondsSinceEpoch % cycleMilliseconds;
     _controller.value = elapsed / cycleMilliseconds;
   }
@@ -1790,10 +1790,10 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
         // generic bob/rotation on top, which makes those transitions read as
         // shaking rather than character motion.
         final usePhysicalMotion =
-            widget.animationsEnabled && widget.mascot != _PetfyMascot.et;
+            widget.animationsEnabled && !widget.mascot.hasPoseAnimations;
         final useIdlePoseLoop =
             widget.animationsEnabled &&
-            widget.mascot == _PetfyMascot.et &&
+            widget.mascot.hasPoseAnimations &&
             mood == _PugMood.idle;
         final phase = usePhysicalMotion || useIdlePoseLoop
             ? _controller.value
@@ -1865,7 +1865,6 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
                                 previousMood: _previousMood,
                                 transitionProgress: _transitionController.value,
                                 phase: phase,
-                                animationsEnabled: widget.animationsEnabled,
                               ),
                             ),
                           ),
@@ -2109,22 +2108,32 @@ enum _PetfyMascot {
   String assetPath(_PugMood mood) =>
       'assets/$assetId/$assetId-${mood.assetName}.png';
 
+  bool get hasPoseAnimations =>
+      this == _PetfyMascot.et || this == _PetfyMascot.lumo;
+
   List<String> get transitionAssetPaths {
-    if (this != _PetfyMascot.et) {
-      return const [];
-    }
-    return const [
-      'assets/et/sequence/idle-to-working/et-idle-to-working-1.png',
-      'assets/et/sequence/idle-to-working/et-idle-to-working-2.png',
-      'assets/et/sequence/idle-to-working/et-idle-to-working-3.png',
-      'assets/et/sequence/idle-loop/et-idle-loop-rest.png',
-      'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
-      'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
-      'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
-      'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
-      'assets/et/sequence/working-to-completed/et-working-to-completed-4.png',
-      'assets/et/sequence/working-to-completed/et-working-to-completed-2.png',
-    ];
+    return switch (this) {
+      _PetfyMascot.et => const [
+        'assets/et/sequence/idle-to-working/et-idle-to-working-1.png',
+        'assets/et/sequence/idle-to-working/et-idle-to-working-2.png',
+        'assets/et/sequence/idle-to-working/et-idle-to-working-3.png',
+        'assets/et/sequence/idle-loop/et-idle-loop-rest.png',
+        'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
+        'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
+        'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
+        'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
+        'assets/et/sequence/working-to-completed/et-working-to-completed-4.png',
+        'assets/et/sequence/working-to-completed/et-working-to-completed-2.png',
+      ],
+      _PetfyMascot.lumo => const [
+        'assets/lumo/sequence/idle-loop/lumo-idle-loop-wave.png',
+        'assets/lumo/sequence/idle-to-working/lumo-idle-to-working-1.png',
+        'assets/lumo/sequence/idle-to-working/lumo-idle-to-working-2.png',
+        'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-1.png',
+        'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-2.png',
+      ],
+      _PetfyMascot.pug => const [],
+    };
   }
 
   Duration transitionDuration({
@@ -2132,7 +2141,18 @@ enum _PetfyMascot {
     required _PugMood to,
     required Duration fallback,
   }) {
-    if (this != _PetfyMascot.et) {
+    if (!hasPoseAnimations) {
+      return fallback;
+    }
+    if (this == _PetfyMascot.lumo) {
+      if (from == _PugMood.completed && to == _PugMood.idle) {
+        return const Duration(milliseconds: 1800);
+      }
+      if ((from == _PugMood.idle && to == _PugMood.working) ||
+          (from == _PugMood.working && to == _PugMood.completed) ||
+          (from == _PugMood.completed && to == _PugMood.working)) {
+        return const Duration(milliseconds: 1050);
+      }
       return fallback;
     }
     if (from == _PugMood.idle && to == _PugMood.working) {
@@ -2149,7 +2169,37 @@ enum _PetfyMascot {
   }
 
   List<String> _transitionFrames(_PugMood from, _PugMood to) {
-    if (this != _PetfyMascot.et) {
+    if (!hasPoseAnimations) {
+      return const [];
+    }
+
+    if (this == _PetfyMascot.lumo) {
+      const idleToWorking = [
+        'assets/lumo/lumo-idle.png',
+        'assets/lumo/sequence/idle-to-working/lumo-idle-to-working-1.png',
+        'assets/lumo/sequence/idle-to-working/lumo-idle-to-working-2.png',
+      ];
+      const workingToCompleted = [
+        'assets/lumo/lumo-working.png',
+        'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-1.png',
+        'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-2.png',
+      ];
+      if (from == _PugMood.idle && to == _PugMood.working) {
+        return idleToWorking;
+      }
+      if (from == _PugMood.working && to == _PugMood.completed) {
+        return workingToCompleted;
+      }
+      if (from == _PugMood.completed && to == _PugMood.working) {
+        return [assetPath(_PugMood.completed), ...workingToCompleted.reversed];
+      }
+      if (from == _PugMood.completed && to == _PugMood.idle) {
+        return [
+          assetPath(_PugMood.completed),
+          ...workingToCompleted.reversed,
+          ...idleToWorking.reversed,
+        ];
+      }
       return const [];
     }
 
@@ -2212,6 +2262,14 @@ enum _PetfyMascot {
       ];
       return idleFrames[(phase * idleFrames.length).floor()];
     }
+    if (this == _PetfyMascot.lumo && mood == _PugMood.idle) {
+      const idleFrames = [
+        'assets/lumo/lumo-idle.png',
+        'assets/lumo/sequence/idle-loop/lumo-idle-loop-wave.png',
+        'assets/lumo/lumo-idle.png',
+      ];
+      return idleFrames[(phase * idleFrames.length).floor()];
+    }
     return assetPath(mood);
   }
 }
@@ -2271,7 +2329,6 @@ class _PetAvatar extends StatelessWidget {
     required this.previousMood,
     required this.transitionProgress,
     required this.phase,
-    required this.animationsEnabled,
   });
 
   final _PetfyMascot mascot;
@@ -2279,12 +2336,11 @@ class _PetAvatar extends StatelessWidget {
   final _PugMood? previousMood;
   final double transitionProgress;
   final double phase;
-  final bool animationsEnabled;
 
   @override
   Widget build(BuildContext context) {
-    // ET selects authored intermediate poses. A brief, clipped cross-fade
-    // removes hard frame cuts without leaving stale mascot layers behind.
+    // Keep exactly one pose mounted. Cross-fading generated PNGs made their
+    // different lighting overlap and read as a distracting blink.
     final assetPath = mascot.displayAssetPath(
       mood: mood,
       previousMood: previousMood,
@@ -2292,29 +2348,11 @@ class _PetAvatar extends StatelessWidget {
       phase: phase,
     );
     return RepaintBoundary(
-      child: AnimatedSwitcher(
-        duration: mascot == _PetfyMascot.et && animationsEnabled
-            ? const Duration(milliseconds: 110)
-            : Duration.zero,
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        layoutBuilder: (currentChild, previousChildren) {
-          return ClipRect(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [...previousChildren, ?currentChild],
-            ),
-          );
-        },
-        transitionBuilder: (child, animation) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        child: _PetAvatarImage(
-          key: ValueKey(assetPath),
-          assetPath: assetPath,
-          mood: mood,
-          phase: phase,
-        ),
+      child: _PetAvatarImage(
+        key: ValueKey(assetPath),
+        assetPath: assetPath,
+        mood: mood,
+        phase: phase,
       ),
     );
   }

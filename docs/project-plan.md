@@ -193,6 +193,7 @@ Active next candidates:
   - First sequence: classic ET, working to completed, with five notebook-closing and approval poses.
   - ET transition coverage: idle to working, working to completed, completed to working, and completed to idle.
   - ET idle loop: a quiet wave moves through high, midway, and resting poses.
+  - Lumo pose animation: idle wave plus work and completion timelines with reverse paths.
 - [ ] Improve first-run setup copy and failure recovery.
 
 Later backlog:
