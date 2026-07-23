@@ -181,6 +181,7 @@ Completed:
 - [x] Configure the update feed for `github.com/josehenriquefs/petfy`.
 - [x] Publish the initial GitHub commit and `v0.0.1` release, then validate the public update feed.
 - [x] Add multiple mascot support with Pug, Lumo, and a classic ET, plus a user-facing selector.
+- [x] Add non-blocking diagnostics for real start and attention event capture.
 
 Active next candidates:
 

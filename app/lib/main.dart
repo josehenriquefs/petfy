@@ -402,6 +402,20 @@ class _PetHomePageState extends State<PetHomePage> {
     diagnostics.add(await _hooksDiagnostic());
     diagnostics.add(await _notifyDiagnostic());
     diagnostics.add(await _sessionScanDiagnostic());
+    diagnostics.add(
+      await _eventCaptureDiagnostic(
+        type: 'task.started',
+        label: 'Start events',
+        missingDetail: 'No task.started event captured from VS Code or CLI yet',
+      ),
+    );
+    diagnostics.add(
+      await _eventCaptureDiagnostic(
+        type: 'task.waiting_approval',
+        label: 'Attention events',
+        missingDetail: 'No approval or attention event captured yet',
+      ),
+    );
 
     if (Platform.isMacOS) {
       diagnostics.add(
@@ -424,7 +438,9 @@ class _PetHomePageState extends State<PetHomePage> {
   Future<void> _maybeOpenSetupGuide(List<SetupDiagnostic> diagnostics) async {
     final setupHealthy =
         diagnostics.isNotEmpty &&
-        diagnostics.every((diagnostic) => diagnostic.ok);
+        diagnostics
+            .where((diagnostic) => diagnostic.requiredForSetup)
+            .every((diagnostic) => diagnostic.ok);
     if (!_settingsLoaded ||
         diagnostics.isEmpty ||
         setupHealthy ||
@@ -526,6 +542,53 @@ class _PetHomePageState extends State<PetHomePage> {
       detail: hasSessions
           ? 'Watching Codex sessions for running tasks'
           : ProjectPaths.codexSessionsDir,
+    );
+  }
+
+  Future<SetupDiagnostic> _eventCaptureDiagnostic({
+    required String type,
+    required String label,
+    required String missingDetail,
+  }) async {
+    final historyFile = File(ProjectPaths.historyFile);
+    if (!await historyFile.exists()) {
+      return SetupDiagnostic(
+        label: label,
+        ok: false,
+        detail: missingDetail,
+        requiredForSetup: false,
+      );
+    }
+
+    try {
+      final lines = await historyFile.readAsLines();
+      for (final line in lines.reversed) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) {
+          continue;
+        }
+        final decoded = jsonDecode(trimmed);
+        if (decoded is! Map<String, dynamic> || decoded['type'] != type) {
+          continue;
+        }
+        final event = CodexPetEvent.fromJson(decoded);
+        final time = event.occurredAt.toLocal().toString().split('.').first;
+        return SetupDiagnostic(
+          label: label,
+          ok: true,
+          detail: '${event.sourceLabel} at $time',
+          requiredForSetup: false,
+        );
+      }
+    } on Object {
+      // Diagnostics should not prevent the app from receiving new events.
+    }
+
+    return SetupDiagnostic(
+      label: label,
+      ok: false,
+      detail: missingDetail,
+      requiredForSetup: false,
     );
   }
 
@@ -3186,9 +3249,14 @@ class _SetupGuidePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasDiagnostics = diagnostics.isNotEmpty;
-    final missing = diagnostics.where((diagnostic) => !diagnostic.ok).toList();
+    final requiredDiagnostics = diagnostics
+        .where((diagnostic) => diagnostic.requiredForSetup)
+        .toList(growable: false);
+    final missing = requiredDiagnostics
+        .where((diagnostic) => !diagnostic.ok)
+        .toList(growable: false);
     final allOk = hasDiagnostics && missing.isEmpty;
-    final checkedCount = diagnostics
+    final checkedCount = requiredDiagnostics
         .where((diagnostic) => diagnostic.ok)
         .length;
 
@@ -3237,7 +3305,7 @@ class _SetupGuidePanel extends StatelessWidget {
             colors: colors,
             allOk: allOk,
             checkedCount: checkedCount,
-            totalCount: diagnostics.length,
+            totalCount: requiredDiagnostics.length,
             missingCount: missing.length,
           ),
           const SizedBox(height: 10),
@@ -3459,7 +3527,9 @@ class _DiagnosticsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final allOk =
         diagnostics.isNotEmpty &&
-        diagnostics.every((diagnostic) => diagnostic.ok);
+        diagnostics
+            .where((diagnostic) => diagnostic.requiredForSetup)
+            .every((diagnostic) => diagnostic.ok);
 
     return Container(
       decoration: BoxDecoration(
@@ -4355,11 +4425,17 @@ class _DiagnosticRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            diagnostic.ok ? Icons.check : Icons.close,
+            diagnostic.ok
+                ? Icons.check
+                : diagnostic.requiredForSetup
+                ? Icons.close
+                : Icons.schedule,
             size: 16,
             color: diagnostic.ok
                 ? const Color(0xFF16A34A)
-                : const Color(0xFFDC2626),
+                : diagnostic.requiredForSetup
+                ? const Color(0xFFDC2626)
+                : const Color(0xFFD97706),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -4870,11 +4946,13 @@ class SetupDiagnostic {
     required this.label,
     required this.ok,
     required this.detail,
+    this.requiredForSetup = true,
   });
 
   final String label;
   final bool ok;
   final String detail;
+  final bool requiredForSetup;
 }
 
 class PetfyVersion {
