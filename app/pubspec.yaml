@@ -70,6 +70,9 @@ flutter:
     - assets/et/et-working.png
     - assets/et/et-completed.png
     - assets/et/et-attention.png
+    - assets/et/sequence/idle-to-working/et-idle-to-working-1.png
+    - assets/et/sequence/idle-to-working/et-idle-to-working-2.png
+    - assets/et/sequence/idle-to-working/et-idle-to-working-3.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-0.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-1.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-2.png

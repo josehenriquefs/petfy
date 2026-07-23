@@ -1699,7 +1699,11 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     if (oldMood != nextMood && widget.animationsEnabled) {
       _previousMood = oldMood;
       _transitionController
-        ..duration = nextMood.transitionDuration
+        ..duration = widget.mascot.transitionDuration(
+          from: oldMood,
+          to: nextMood,
+          fallback: nextMood.transitionDuration,
+        )
         ..forward(from: 0);
     }
 
@@ -2094,6 +2098,9 @@ enum _PetfyMascot {
       return const [];
     }
     return const [
+      'assets/et/sequence/idle-to-working/et-idle-to-working-1.png',
+      'assets/et/sequence/idle-to-working/et-idle-to-working-2.png',
+      'assets/et/sequence/idle-to-working/et-idle-to-working-3.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
@@ -2102,30 +2109,80 @@ enum _PetfyMascot {
     ];
   }
 
+  Duration transitionDuration({
+    required _PugMood from,
+    required _PugMood to,
+    required Duration fallback,
+  }) {
+    if (this != _PetfyMascot.et) {
+      return fallback;
+    }
+    if (from == _PugMood.idle && to == _PugMood.working) {
+      return const Duration(milliseconds: 1250);
+    }
+    if (from == _PugMood.completed && to == _PugMood.idle) {
+      return const Duration(milliseconds: 2400);
+    }
+    if ((from == _PugMood.working && to == _PugMood.completed) ||
+        (from == _PugMood.completed && to == _PugMood.working)) {
+      return const Duration(milliseconds: 1350);
+    }
+    return fallback;
+  }
+
+  List<String> _transitionFrames(_PugMood from, _PugMood to) {
+    if (this != _PetfyMascot.et) {
+      return const [];
+    }
+
+    const idleToWorking = [
+      'assets/et/et-idle.png',
+      'assets/et/sequence/idle-to-working/et-idle-to-working-1.png',
+      'assets/et/sequence/idle-to-working/et-idle-to-working-2.png',
+      'assets/et/sequence/idle-to-working/et-idle-to-working-3.png',
+    ];
+    const workingToCompleted = [
+      'assets/et/et-working.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-4.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-2.png',
+    ];
+
+    if (from == _PugMood.idle && to == _PugMood.working) {
+      return idleToWorking;
+    }
+    if (from == _PugMood.working && to == _PugMood.completed) {
+      return workingToCompleted;
+    }
+    if (from == _PugMood.completed && to == _PugMood.working) {
+      return [assetPath(_PugMood.completed), ...workingToCompleted.reversed];
+    }
+    if (from == _PugMood.completed && to == _PugMood.idle) {
+      return [
+        assetPath(_PugMood.completed),
+        ...workingToCompleted.reversed,
+        ...idleToWorking.reversed,
+      ];
+    }
+    return const [];
+  }
+
   String displayAssetPath({
     required _PugMood mood,
     required _PugMood? previousMood,
     required double transitionProgress,
   }) {
-    if (this == _PetfyMascot.et &&
-        previousMood == _PugMood.working &&
-        mood == _PugMood.completed &&
-        transitionProgress < 1) {
-      if (transitionProgress < 0.18) {
-        return transitionAssetPaths[0];
-      }
-      if (transitionProgress < 0.35) {
-        return transitionAssetPaths[1];
-      }
-      if (transitionProgress < 0.52) {
-        return transitionAssetPaths[2];
-      }
-      if (transitionProgress < 0.70) {
-        return transitionAssetPaths[3];
-      }
-      if (transitionProgress < 0.87) {
-        return transitionAssetPaths[4];
-      }
+    final frames = previousMood == null
+        ? const <String>[]
+        : _transitionFrames(previousMood, mood);
+    if (frames.isNotEmpty && transitionProgress < 1) {
+      final index = math.min(
+        (transitionProgress * frames.length).floor(),
+        frames.length - 1,
+      );
+      return frames[index];
     }
     return assetPath(mood);
   }
