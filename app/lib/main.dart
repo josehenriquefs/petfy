@@ -1909,24 +1909,10 @@ class _PetAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: animationsEnabled ? mood.transitionDuration : Duration.zero,
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) {
-        return FadeTransition(
-          // Keep both frames visible during a rapid state change. The window
-          // itself is transparent, so fading to zero can look like the pet
-          // vanished while a new PNG is decoded.
-          opacity: Tween<double>(begin: 0.55, end: 1).animate(animation),
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.96, end: 1).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
-            child: child,
-          ),
-        );
-      },
+    // The surrounding pet button already animates each mood transition. Keep
+    // exactly one PNG in this layer so rapid event changes cannot stack old
+    // moods on top of the current mascot.
+    return RepaintBoundary(
       child: _PetAvatarImage(
         key: ValueKey(mood.assetPath),
         mood: mood,

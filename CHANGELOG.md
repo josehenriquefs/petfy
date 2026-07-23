@@ -5,7 +5,8 @@
 ### Fixed
 
 - Pug assets are preloaded and retain a visible fallback during rapid state
-  transitions, preventing the mascot from briefly disappearing.
+  transitions, preventing the mascot from briefly disappearing or stacking
+  multiple mood frames.
 - macOS reinstall now stops the existing Petfy process before replacing its
   bundle, preventing a stale process from serving old assets.
 - `UserPromptSubmit` now takes precedence over a generic payload type, so a new
