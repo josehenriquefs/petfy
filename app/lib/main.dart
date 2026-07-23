@@ -1507,6 +1507,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   late final AnimationController _controller;
   late final AnimationController _transitionController;
   _PugMood? _previousMood;
+  var _assetsPrecached = false;
 
   @override
   void initState() {
@@ -1522,6 +1523,18 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     );
     if (widget.animationsEnabled) {
       _controller.repeat();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_assetsPrecached) {
+      return;
+    }
+    _assetsPrecached = true;
+    for (final mood in _PugMood.values) {
+      precacheImage(AssetImage(mood.assetPath), context);
     }
   }
 
@@ -1902,7 +1915,10 @@ class _PetAvatar extends StatelessWidget {
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
         return FadeTransition(
-          opacity: animation,
+          // Keep both frames visible during a rapid state change. The window
+          // itself is transparent, so fading to zero can look like the pet
+          // vanished while a new PNG is decoded.
+          opacity: Tween<double>(begin: 0.55, end: 1).animate(animation),
           child: ScaleTransition(
             scale: Tween<double>(begin: 0.96, end: 1).animate(
               CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
@@ -1928,15 +1944,26 @@ class _PetAvatarImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      mood.assetPath,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
-      errorBuilder: (context, error, stackTrace) {
-        return CustomPaint(
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CustomPaint(
           painter: _PetAvatarPainter(mood: mood, phase: phase),
-        );
-      },
+        ),
+        Image.asset(
+          mood.assetPath,
+          fit: BoxFit.contain,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.high,
+          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+            if (wasSynchronouslyLoaded || frame != null) {
+              return child;
+            }
+            return const SizedBox.expand();
+          },
+          errorBuilder: (context, error, stackTrace) => const SizedBox.expand(),
+        ),
+      ],
     );
   }
 }

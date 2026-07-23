@@ -54,6 +54,7 @@ function install() {
   fs.mkdirSync(launchAgentsDir, { recursive: true });
   fs.mkdirSync(stateDir, { recursive: true });
 
+  stop();
   removeLegacyPugdexInstall();
   fs.rmSync(installedApp, { recursive: true, force: true });
   copyDirectory(builtApp, installedApp);

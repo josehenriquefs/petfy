@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Pug assets are preloaded and retain a visible fallback during rapid state
+  transitions, preventing the mascot from briefly disappearing.
+- macOS reinstall now stops the existing Petfy process before replacing its
+  bundle, preventing a stale process from serving old assets.
 - `UserPromptSubmit` now takes precedence over a generic payload type, so a new
   task is recorded as `Working` rather than `Completed`.
 - Task reconciliation now resolves lifecycle events per turn before workspace,
