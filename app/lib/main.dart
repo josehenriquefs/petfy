@@ -1728,6 +1728,12 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
         context,
       );
     }
+    for (final assetPath in mascot.transitionAssetPaths) {
+      precacheImage(
+        ResizeImage.resizeIfNeeded(384, null, AssetImage(assetPath)),
+        context,
+      );
+    }
   }
 
   _PugMood get _currentMood => _PugMood.fromTask(widget.task, widget.loading);
@@ -1836,6 +1842,8 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
                               child: _PetAvatar(
                                 mascot: widget.mascot,
                                 mood: mood,
+                                previousMood: _previousMood,
+                                transitionProgress: _transitionController.value,
                                 phase: phase,
                                 animationsEnabled: widget.animationsEnabled,
                               ),
@@ -1997,7 +2005,9 @@ enum _PugMood {
     return switch (this) {
       _PugMood.idle => const Duration(milliseconds: 460),
       _PugMood.working => const Duration(milliseconds: 430),
-      _PugMood.completed => const Duration(milliseconds: 580),
+      // The ET completion sequence needs enough time for its intermediate
+      // notebook-closing poses to read at a small floating-pet size.
+      _PugMood.completed => const Duration(milliseconds: 950),
       _PugMood.attention => const Duration(milliseconds: 420),
     };
   }
@@ -2078,6 +2088,36 @@ enum _PetfyMascot {
 
   String assetPath(_PugMood mood) =>
       'assets/$assetId/$assetId-${mood.assetName}.png';
+
+  List<String> get transitionAssetPaths {
+    if (this != _PetfyMascot.et) {
+      return const [];
+    }
+    return const [
+      'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
+      'assets/et/sequence/working-to-completed/et-working-to-completed-2.png',
+    ];
+  }
+
+  String displayAssetPath({
+    required _PugMood mood,
+    required _PugMood? previousMood,
+    required double transitionProgress,
+  }) {
+    if (this == _PetfyMascot.et &&
+        previousMood == _PugMood.working &&
+        mood == _PugMood.completed &&
+        transitionProgress < 1) {
+      if (transitionProgress < 0.28) {
+        return assetPath(_PugMood.working);
+      }
+      if (transitionProgress < 0.62) {
+        return transitionAssetPaths[0];
+      }
+      return transitionAssetPaths[1];
+    }
+    return assetPath(mood);
+  }
 }
 
 class _MoodEntranceTransform {
@@ -2132,24 +2172,32 @@ class _PetAvatar extends StatelessWidget {
   const _PetAvatar({
     required this.mascot,
     required this.mood,
+    required this.previousMood,
+    required this.transitionProgress,
     required this.phase,
     required this.animationsEnabled,
   });
 
   final _PetfyMascot mascot;
   final _PugMood mood;
+  final _PugMood? previousMood;
+  final double transitionProgress;
   final double phase;
   final bool animationsEnabled;
 
   @override
   Widget build(BuildContext context) {
-    // The surrounding pet button already animates each mood transition. Keep
-    // exactly one PNG in this layer so rapid event changes cannot stack old
-    // moods on top of the current mascot.
+    // Keep one frame mounted at a time. ET can select an intermediate frame
+    // for working -> completed; every other mascot/state uses its static pose.
+    final assetPath = mascot.displayAssetPath(
+      mood: mood,
+      previousMood: previousMood,
+      transitionProgress: transitionProgress,
+    );
     return RepaintBoundary(
       child: _PetAvatarImage(
-        key: ValueKey(mascot.assetPath(mood)),
-        mascot: mascot,
+        key: ValueKey(assetPath),
+        assetPath: assetPath,
         mood: mood,
         phase: phase,
       ),
@@ -2160,19 +2208,19 @@ class _PetAvatar extends StatelessWidget {
 class _PetAvatarImage extends StatelessWidget {
   const _PetAvatarImage({
     super.key,
-    required this.mascot,
+    required this.assetPath,
     required this.mood,
     required this.phase,
   });
 
-  final _PetfyMascot mascot;
+  final String assetPath;
   final _PugMood mood;
   final double phase;
 
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      mascot.assetPath(mood),
+      assetPath,
       cacheWidth: 384,
       fit: BoxFit.contain,
       gaplessPlayback: true,

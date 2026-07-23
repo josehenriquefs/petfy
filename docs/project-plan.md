@@ -189,7 +189,8 @@ Active next candidates:
 - [ ] Validate attention events and `task.started` in a real VS Code session.
   - [x] Validated `task.started` and `task.completed` through a real Codex CLI session.
   - [ ] Attention requires a real approval request; CLI validation runs with approval disabled.
-- [ ] Add a real frame-sequence mascot animation pipeline with intermediate poses and static fallbacks.
+- [x] Add a real frame-sequence mascot animation pipeline with intermediate poses and static fallbacks.
+  - First sequence: classic ET, working to completed, with notebook-closing poses.
 - [ ] Improve first-run setup copy and failure recovery.
 
 Later backlog:
