@@ -1665,6 +1665,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   late final AnimationController _transitionController;
   Timer? _motionTimer;
   _PugMood? _previousMood;
+  DateTime _poseLoopStartedAt = DateTime.now();
   final _precachedMascots = <_PetfyMascot>{};
 
   @override
@@ -1696,6 +1697,9 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     }
     final oldMood = _PugMood.fromTask(oldWidget.task, oldWidget.loading);
     final nextMood = _currentMood;
+    if (oldWidget.mascot != widget.mascot || oldMood != nextMood) {
+      _poseLoopStartedAt = DateTime.now();
+    }
     if (oldMood != nextMood && widget.animationsEnabled) {
       _previousMood = oldMood;
       _transitionController
@@ -1747,7 +1751,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
       return false;
     }
     if (widget.mascot.hasPoseAnimations) {
-      return mood == _PugMood.idle;
+      return mood == _PugMood.idle || mood == _PugMood.working;
     }
     return mood == _PugMood.working || mood == _PugMood.attention;
   }
@@ -1770,8 +1774,11 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   }
 
   void _advanceMotionFrame() {
-    final cycleMilliseconds = widget.mascot.hasPoseAnimations ? 10000 : 1600;
-    final elapsed = DateTime.now().millisecondsSinceEpoch % cycleMilliseconds;
+    final cycleMilliseconds = widget.mascot.hasPoseAnimations ? 20000 : 1600;
+    final elapsed = widget.mascot.hasPoseAnimations
+        ? DateTime.now().difference(_poseLoopStartedAt).inMilliseconds %
+              cycleMilliseconds
+        : DateTime.now().millisecondsSinceEpoch % cycleMilliseconds;
     _controller.value = elapsed / cycleMilliseconds;
   }
 
@@ -1794,7 +1801,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
         final useIdlePoseLoop =
             widget.animationsEnabled &&
             widget.mascot.hasPoseAnimations &&
-            mood == _PugMood.idle;
+            (mood == _PugMood.idle || mood == _PugMood.working);
         final phase = usePhysicalMotion || useIdlePoseLoop
             ? _controller.value
             : 0.0;
@@ -2119,6 +2126,8 @@ enum _PetfyMascot {
         'assets/et/sequence/idle-to-working/et-idle-to-working-3.png',
         'assets/et/sequence/idle-loop/et-idle-loop-rest.png',
         'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
+        'assets/et/sequence/working-loop/et-working-loop-1.png',
+        'assets/et/sequence/working-loop/et-working-loop-2.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
@@ -2131,6 +2140,8 @@ enum _PetfyMascot {
         'assets/lumo/sequence/idle-to-working/lumo-idle-to-working-2.png',
         'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-1.png',
         'assets/lumo/sequence/working-to-completed/lumo-working-to-completed-2.png',
+        'assets/lumo/sequence/working-loop/lumo-working-loop-1.png',
+        'assets/lumo/sequence/working-loop/lumo-working-loop-2.png',
       ],
       _PetfyMascot.pug => const [],
     };
@@ -2255,20 +2266,38 @@ enum _PetfyMascot {
     }
     if (this == _PetfyMascot.et && mood == _PugMood.idle) {
       // Pause at rest for most of the cycle so the greeting feels occasional.
-      if (phase < 0.12 || phase >= 0.88) {
-        return 'assets/et/et-idle.png';
+      if (phase < 0.78 || phase >= 0.98) {
+        return 'assets/et/sequence/idle-loop/et-idle-loop-rest.png';
       }
-      if (phase < 0.20 || phase >= 0.80) {
+      if (phase < 0.82 || phase >= 0.94) {
         return 'assets/et/sequence/idle-loop/et-idle-loop-wave.png';
       }
-      return 'assets/et/sequence/idle-loop/et-idle-loop-rest.png';
+      return 'assets/et/et-idle.png';
     }
     if (this == _PetfyMascot.lumo && mood == _PugMood.idle) {
       // Lumo also stays in the base pose before giving another quick wave.
-      if (phase >= 0.66 && phase < 0.76) {
+      if (phase >= 0.84 && phase < 0.91) {
         return 'assets/lumo/sequence/idle-loop/lumo-idle-loop-wave.png';
       }
       return 'assets/lumo/lumo-idle.png';
+    }
+    if (this == _PetfyMascot.et && mood == _PugMood.working) {
+      if (phase >= 0.84 && phase < 0.88 || phase >= 0.92 && phase < 0.96) {
+        return 'assets/et/sequence/working-loop/et-working-loop-1.png';
+      }
+      if (phase >= 0.88 && phase < 0.92) {
+        return 'assets/et/sequence/working-loop/et-working-loop-2.png';
+      }
+      return 'assets/et/et-working.png';
+    }
+    if (this == _PetfyMascot.lumo && mood == _PugMood.working) {
+      if (phase >= 0.84 && phase < 0.88 || phase >= 0.92 && phase < 0.96) {
+        return 'assets/lumo/sequence/working-loop/lumo-working-loop-1.png';
+      }
+      if (phase >= 0.88 && phase < 0.92) {
+        return 'assets/lumo/sequence/working-loop/lumo-working-loop-2.png';
+      }
+      return 'assets/lumo/lumo-working.png';
     }
     return assetPath(mood);
   }

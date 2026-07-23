@@ -192,8 +192,8 @@ Active next candidates:
 - [x] Add a real frame-sequence mascot animation pipeline with intermediate poses and static fallbacks.
   - First sequence: classic ET, working to completed, with five notebook-closing and approval poses.
   - ET transition coverage: idle to working, working to completed, completed to working, and completed to idle.
-  - ET idle loop: an occasional wave with a generous rest pause between cycles.
-  - Lumo pose animation: an occasional idle wave plus work and completion timelines with reverse paths.
+  - ET pose loops: an occasional idle wave plus a delayed working gesture after 16 seconds.
+  - Lumo pose animation: delayed idle wave and working gesture plus completion timelines with reverse paths.
 - [ ] Improve first-run setup copy and failure recovery.
 
 Later backlog:
