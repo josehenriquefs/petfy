@@ -185,7 +185,9 @@ Completed:
 
 Active next candidates:
 
-- [ ] Validate `task.started` and attention events in real VS Code and CLI sessions.
+- [ ] Validate attention events and `task.started` in a real VS Code session.
+  - [x] Validated `task.started` and `task.completed` through a real Codex CLI session.
+  - [ ] Attention requires a real approval request; CLI validation runs with approval disabled.
 - [ ] Add a better animated pug mascot asset pipeline.
 - [ ] Improve first-run setup copy and failure recovery.
 
