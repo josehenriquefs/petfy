@@ -1770,7 +1770,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   }
 
   void _advanceMotionFrame() {
-    final cycleMilliseconds = widget.mascot.hasPoseAnimations ? 3000 : 1600;
+    final cycleMilliseconds = widget.mascot.hasPoseAnimations ? 10000 : 1600;
     final elapsed = DateTime.now().millisecondsSinceEpoch % cycleMilliseconds;
     _controller.value = elapsed / cycleMilliseconds;
   }
@@ -2254,21 +2254,21 @@ enum _PetfyMascot {
       return frames[index];
     }
     if (this == _PetfyMascot.et && mood == _PugMood.idle) {
-      const idleFrames = [
-        'assets/et/et-idle.png',
-        'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
-        'assets/et/sequence/idle-loop/et-idle-loop-rest.png',
-        'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
-      ];
-      return idleFrames[(phase * idleFrames.length).floor()];
+      // Pause at rest for most of the cycle so the greeting feels occasional.
+      if (phase < 0.12 || phase >= 0.88) {
+        return 'assets/et/et-idle.png';
+      }
+      if (phase < 0.20 || phase >= 0.80) {
+        return 'assets/et/sequence/idle-loop/et-idle-loop-wave.png';
+      }
+      return 'assets/et/sequence/idle-loop/et-idle-loop-rest.png';
     }
     if (this == _PetfyMascot.lumo && mood == _PugMood.idle) {
-      const idleFrames = [
-        'assets/lumo/lumo-idle.png',
-        'assets/lumo/sequence/idle-loop/lumo-idle-loop-wave.png',
-        'assets/lumo/lumo-idle.png',
-      ];
-      return idleFrames[(phase * idleFrames.length).floor()];
+      // Lumo also stays in the base pose before giving another quick wave.
+      if (phase >= 0.66 && phase < 0.76) {
+        return 'assets/lumo/sequence/idle-loop/lumo-idle-loop-wave.png';
+      }
+      return 'assets/lumo/lumo-idle.png';
     }
     return assetPath(mood);
   }
