@@ -17,8 +17,9 @@ Core jobs:
 
 Future mascot direction:
 
-- Animated pug.
-- Idle, working, completed, and attention states.
+- Real pose-to-pose mascot animation, not crossfades between static states.
+- Short sprite sequences or a rigged animation for idle, working, completed, and attention.
+- Shared intermediate poses for transitions such as idle to laptop work and work to completion.
 - Configurable size and sound.
 
 ## Name Decision
@@ -188,7 +189,7 @@ Active next candidates:
 - [ ] Validate attention events and `task.started` in a real VS Code session.
   - [x] Validated `task.started` and `task.completed` through a real Codex CLI session.
   - [ ] Attention requires a real approval request; CLI validation runs with approval disabled.
-- [ ] Add a better animated pug mascot asset pipeline.
+- [ ] Add a real frame-sequence mascot animation pipeline with intermediate poses and static fallbacks.
 - [ ] Improve first-run setup copy and failure recovery.
 
 Later backlog:
