@@ -1743,9 +1743,13 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   _PugMood get _currentMood => _PugMood.fromTask(widget.task, widget.loading);
 
   bool _shouldAnimateContinuously(_PugMood mood) {
-    return widget.animationsEnabled &&
-        widget.mascot != _PetfyMascot.et &&
-        (mood == _PugMood.working || mood == _PugMood.attention);
+    if (!widget.animationsEnabled) {
+      return false;
+    }
+    if (widget.mascot == _PetfyMascot.et) {
+      return mood == _PugMood.idle;
+    }
+    return mood == _PugMood.working || mood == _PugMood.attention;
   }
 
   void _updateMotionLoop(_PugMood mood) {
@@ -1766,7 +1770,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   }
 
   void _advanceMotionFrame() {
-    const cycleMilliseconds = 1600;
+    final cycleMilliseconds = widget.mascot == _PetfyMascot.et ? 3000 : 1600;
     final elapsed = DateTime.now().millisecondsSinceEpoch % cycleMilliseconds;
     _controller.value = elapsed / cycleMilliseconds;
   }
@@ -1787,7 +1791,13 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
         // shaking rather than character motion.
         final usePhysicalMotion =
             widget.animationsEnabled && widget.mascot != _PetfyMascot.et;
-        final phase = usePhysicalMotion ? _controller.value : 0.0;
+        final useIdlePoseLoop =
+            widget.animationsEnabled &&
+            widget.mascot == _PetfyMascot.et &&
+            mood == _PugMood.idle;
+        final phase = usePhysicalMotion || useIdlePoseLoop
+            ? _controller.value
+            : 0.0;
         final entrance = usePhysicalMotion
             ? mood.entranceTransform(
                 _transitionController.value,
@@ -2107,6 +2117,8 @@ enum _PetfyMascot {
       'assets/et/sequence/idle-to-working/et-idle-to-working-1.png',
       'assets/et/sequence/idle-to-working/et-idle-to-working-2.png',
       'assets/et/sequence/idle-to-working/et-idle-to-working-3.png',
+      'assets/et/sequence/idle-loop/et-idle-loop-rest.png',
+      'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
       'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
@@ -2179,6 +2191,7 @@ enum _PetfyMascot {
     required _PugMood mood,
     required _PugMood? previousMood,
     required double transitionProgress,
+    required double phase,
   }) {
     final frames = previousMood == null
         ? const <String>[]
@@ -2189,6 +2202,15 @@ enum _PetfyMascot {
         frames.length - 1,
       );
       return frames[index];
+    }
+    if (this == _PetfyMascot.et && mood == _PugMood.idle) {
+      const idleFrames = [
+        'assets/et/et-idle.png',
+        'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
+        'assets/et/sequence/idle-loop/et-idle-loop-rest.png',
+        'assets/et/sequence/idle-loop/et-idle-loop-wave.png',
+      ];
+      return idleFrames[(phase * idleFrames.length).floor()];
     }
     return assetPath(mood);
   }
@@ -2267,6 +2289,7 @@ class _PetAvatar extends StatelessWidget {
       mood: mood,
       previousMood: previousMood,
       transitionProgress: transitionProgress,
+      phase: phase,
     );
     return RepaintBoundary(
       child: AnimatedSwitcher(

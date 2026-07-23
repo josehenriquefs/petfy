@@ -192,6 +192,7 @@ Active next candidates:
 - [x] Add a real frame-sequence mascot animation pipeline with intermediate poses and static fallbacks.
   - First sequence: classic ET, working to completed, with five notebook-closing and approval poses.
   - ET transition coverage: idle to working, working to completed, completed to working, and completed to idle.
+  - ET idle loop: a quiet wave moves through high, midway, and resting poses.
 - [ ] Improve first-run setup copy and failure recovery.
 
 Later backlog:
