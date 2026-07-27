@@ -62,6 +62,22 @@ flutter:
     - assets/pug/pug-working.png
     - assets/pug/pug-completed.png
     - assets/pug/pug-attention.png
+    - assets/pug/sequence/idle-loop/pug-idle-loop-1.png
+    - assets/pug/sequence/idle-loop/pug-idle-loop-2.png
+    - assets/pug/sequence/idle-loop/pug-idle-loop-3.png
+    - assets/pug/sequence/idle-loop/pug-idle-loop-4.png
+    - assets/pug/sequence/working-loop/pug-working-loop-1.png
+    - assets/pug/sequence/working-loop/pug-working-loop-2.png
+    - assets/pug/sequence/working-loop/pug-working-loop-3.png
+    - assets/pug/sequence/working-loop/pug-working-loop-4.png
+    - assets/pug/sequence/completed-loop/pug-completed-loop-1.png
+    - assets/pug/sequence/completed-loop/pug-completed-loop-2.png
+    - assets/pug/sequence/completed-loop/pug-completed-loop-3.png
+    - assets/pug/sequence/completed-loop/pug-completed-loop-4.png
+    - assets/pug/sequence/attention-loop/pug-attention-loop-1.png
+    - assets/pug/sequence/attention-loop/pug-attention-loop-2.png
+    - assets/pug/sequence/attention-loop/pug-attention-loop-3.png
+    - assets/pug/sequence/attention-loop/pug-attention-loop-4.png
     - assets/lumo/lumo-idle.png
     - assets/lumo/lumo-working.png
     - assets/lumo/lumo-completed.png

@@ -2142,7 +2142,9 @@ enum _PetfyMascot {
       'assets/$assetId/$assetId-${mood.assetName}.png';
 
   bool get hasPoseAnimations =>
-      this == _PetfyMascot.et || this == _PetfyMascot.lumo;
+      this == _PetfyMascot.pug ||
+      this == _PetfyMascot.et ||
+      this == _PetfyMascot.lumo;
 
   List<String> get transitionAssetPaths {
     return switch (this) {
@@ -2181,7 +2183,24 @@ enum _PetfyMascot {
         'assets/lumo/sequence/attention-loop/lumo-attention-loop-3.png',
         'assets/lumo/sequence/attention-loop/lumo-attention-loop-4.png',
       ],
-      _PetfyMascot.pug => const [],
+      _PetfyMascot.pug => const [
+        'assets/pug/sequence/idle-loop/pug-idle-loop-1.png',
+        'assets/pug/sequence/idle-loop/pug-idle-loop-2.png',
+        'assets/pug/sequence/idle-loop/pug-idle-loop-3.png',
+        'assets/pug/sequence/idle-loop/pug-idle-loop-4.png',
+        'assets/pug/sequence/working-loop/pug-working-loop-1.png',
+        'assets/pug/sequence/working-loop/pug-working-loop-2.png',
+        'assets/pug/sequence/working-loop/pug-working-loop-3.png',
+        'assets/pug/sequence/working-loop/pug-working-loop-4.png',
+        'assets/pug/sequence/completed-loop/pug-completed-loop-1.png',
+        'assets/pug/sequence/completed-loop/pug-completed-loop-2.png',
+        'assets/pug/sequence/completed-loop/pug-completed-loop-3.png',
+        'assets/pug/sequence/completed-loop/pug-completed-loop-4.png',
+        'assets/pug/sequence/attention-loop/pug-attention-loop-1.png',
+        'assets/pug/sequence/attention-loop/pug-attention-loop-2.png',
+        'assets/pug/sequence/attention-loop/pug-attention-loop-3.png',
+        'assets/pug/sequence/attention-loop/pug-attention-loop-4.png',
+      ],
     };
   }
 
@@ -2219,6 +2238,11 @@ enum _PetfyMascot {
 
   List<String> _transitionFrames(_PugMood from, _PugMood to) {
     if (!hasPoseAnimations) {
+      return const [];
+    }
+    // Pug has authored loops in this iteration. Its state transitions retain
+    // the destination pose until dedicated in-between frames are authored.
+    if (this == _PetfyMascot.pug) {
       return const [];
     }
 
@@ -2301,6 +2325,11 @@ enum _PetfyMascot {
         frames.length - 1,
       );
       return frames[index];
+    }
+    if (this == _PetfyMascot.pug) {
+      final frame = math.min((phase * 4).floor() + 1, 4);
+      return 'assets/pug/sequence/${mood.assetName}-loop/'
+          'pug-${mood.assetName}-loop-$frame.png';
     }
     if (this == _PetfyMascot.et && mood == _PugMood.idle) {
       // Pause at rest for most of the cycle so the greeting feels occasional.
