@@ -77,6 +77,8 @@ flutter:
     - assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png
     - assets/lumo/sequence/attention-loop/lumo-attention-loop-1.png
     - assets/lumo/sequence/attention-loop/lumo-attention-loop-2.png
+    - assets/lumo/sequence/attention-loop/lumo-attention-loop-3.png
+    - assets/lumo/sequence/attention-loop/lumo-attention-loop-4.png
     - assets/et/et-idle.png
     - assets/et/et-working.png
     - assets/et/et-completed.png
@@ -92,6 +94,8 @@ flutter:
     - assets/et/sequence/completed-loop/et-completed-loop-2.png
     - assets/et/sequence/attention-loop/et-attention-loop-1.png
     - assets/et/sequence/attention-loop/et-attention-loop-2.png
+    - assets/et/sequence/attention-loop/et-attention-loop-3.png
+    - assets/et/sequence/attention-loop/et-attention-loop-4.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-0.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-1.png
     - assets/et/sequence/working-to-completed/et-working-to-completed-2.png

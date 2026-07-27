@@ -2156,6 +2156,8 @@ enum _PetfyMascot {
         'assets/et/sequence/completed-loop/et-completed-loop-2.png',
         'assets/et/sequence/attention-loop/et-attention-loop-1.png',
         'assets/et/sequence/attention-loop/et-attention-loop-2.png',
+        'assets/et/sequence/attention-loop/et-attention-loop-3.png',
+        'assets/et/sequence/attention-loop/et-attention-loop-4.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
@@ -2174,6 +2176,8 @@ enum _PetfyMascot {
         'assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png',
         'assets/lumo/sequence/attention-loop/lumo-attention-loop-1.png',
         'assets/lumo/sequence/attention-loop/lumo-attention-loop-2.png',
+        'assets/lumo/sequence/attention-loop/lumo-attention-loop-3.png',
+        'assets/lumo/sequence/attention-loop/lumo-attention-loop-4.png',
       ],
       _PetfyMascot.pug => const [],
     };
@@ -2351,16 +2355,28 @@ enum _PetfyMascot {
     }
     if (this == _PetfyMascot.et && mood == _PugMood.attention) {
       // Keep attention active rather than delayed: the user needs to act now.
-      if (phase < 0.24 || (phase >= 0.52 && phase < 0.76)) {
+      if (phase < 0.25) {
         return 'assets/et/sequence/attention-loop/et-attention-loop-1.png';
       }
-      return 'assets/et/sequence/attention-loop/et-attention-loop-2.png';
+      if (phase < 0.50) {
+        return 'assets/et/sequence/attention-loop/et-attention-loop-2.png';
+      }
+      if (phase < 0.75) {
+        return 'assets/et/sequence/attention-loop/et-attention-loop-3.png';
+      }
+      return 'assets/et/sequence/attention-loop/et-attention-loop-4.png';
     }
     if (this == _PetfyMascot.lumo && mood == _PugMood.attention) {
-      if (phase < 0.30 || (phase >= 0.60 && phase < 0.82)) {
+      if (phase < 0.25) {
         return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-1.png';
       }
-      return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-2.png';
+      if (phase < 0.50) {
+        return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-2.png';
+      }
+      if (phase < 0.75) {
+        return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-3.png';
+      }
+      return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-4.png';
     }
     return assetPath(mood);
   }
