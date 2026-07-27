@@ -45,8 +45,9 @@ For Lumo and classic ET:
 - `completed -> idle`: returns through the work and idle timeline.
 - Idle, working, and completed loops wait about 16.8 seconds before a brief
   action. A state or mascot change resets that delay.
-- Attention currently has a static asset plus the orange app-level badge. It is
-  the next state that needs authored mascot poses.
+- Attention has authored immediate two-pose loops for classic ET and Lumo,
+  alongside the orange app-level badge. The loop intentionally has no long
+  ambient delay because it represents a pending user action.
 
 The renderer intentionally mounts only one PNG at a time. A previous crossfade
 between generated assets created visible flashing because their lighting and
@@ -105,7 +106,7 @@ confirm hook coverage.
 
 ### Next Up
 
-- [ ] Add authored attention poses and a short immediate attention loop for
+- [x] Add authored attention poses and a short immediate attention loop for
   classic ET and Lumo.
 - [ ] Add an animation preview/debug surface in Settings so each mascot state
   and transition can be reviewed without creating fake Codex events.

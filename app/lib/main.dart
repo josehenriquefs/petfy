@@ -1753,7 +1753,8 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     if (widget.mascot.hasPoseAnimations) {
       return mood == _PugMood.idle ||
           mood == _PugMood.working ||
-          mood == _PugMood.completed;
+          mood == _PugMood.completed ||
+          mood == _PugMood.attention;
     }
     return mood == _PugMood.working || mood == _PugMood.attention;
   }
@@ -1776,7 +1777,16 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
   }
 
   void _advanceMotionFrame() {
-    final cycleMilliseconds = widget.mascot.hasPoseAnimations ? 20000 : 1600;
+    // Attention is intentionally immediate and short. Unlike the ambient
+    // idle/working/completed actions, it must make a pending user action clear
+    // as soon as the event arrives.
+    final isAttentionPose =
+        widget.mascot.hasPoseAnimations && _currentMood == _PugMood.attention;
+    final cycleMilliseconds = isAttentionPose
+        ? 1800
+        : widget.mascot.hasPoseAnimations
+        ? 20000
+        : 1600;
     final elapsed = widget.mascot.hasPoseAnimations
         ? DateTime.now().difference(_poseLoopStartedAt).inMilliseconds %
               cycleMilliseconds
@@ -1805,7 +1815,8 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
             widget.mascot.hasPoseAnimations &&
             (mood == _PugMood.idle ||
                 mood == _PugMood.working ||
-                mood == _PugMood.completed);
+                mood == _PugMood.completed ||
+                mood == _PugMood.attention);
         final phase = usePhysicalMotion || useIdlePoseLoop
             ? _controller.value
             : 0.0;
@@ -2134,6 +2145,8 @@ enum _PetfyMascot {
         'assets/et/sequence/working-loop/et-working-loop-2.png',
         'assets/et/sequence/completed-loop/et-completed-loop-1.png',
         'assets/et/sequence/completed-loop/et-completed-loop-2.png',
+        'assets/et/sequence/attention-loop/et-attention-loop-1.png',
+        'assets/et/sequence/attention-loop/et-attention-loop-2.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-0.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-1.png',
         'assets/et/sequence/working-to-completed/et-working-to-completed-3.png',
@@ -2150,6 +2163,8 @@ enum _PetfyMascot {
         'assets/lumo/sequence/working-loop/lumo-working-loop-2.png',
         'assets/lumo/sequence/completed-loop/lumo-completed-loop-1.png',
         'assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png',
+        'assets/lumo/sequence/attention-loop/lumo-attention-loop-1.png',
+        'assets/lumo/sequence/attention-loop/lumo-attention-loop-2.png',
       ],
       _PetfyMascot.pug => const [],
     };
@@ -2324,6 +2339,19 @@ enum _PetfyMascot {
         return 'assets/lumo/sequence/completed-loop/lumo-completed-loop-2.png';
       }
       return 'assets/lumo/lumo-completed.png';
+    }
+    if (this == _PetfyMascot.et && mood == _PugMood.attention) {
+      // Keep attention active rather than delayed: the user needs to act now.
+      if (phase < 0.24 || (phase >= 0.52 && phase < 0.76)) {
+        return 'assets/et/sequence/attention-loop/et-attention-loop-1.png';
+      }
+      return 'assets/et/sequence/attention-loop/et-attention-loop-2.png';
+    }
+    if (this == _PetfyMascot.lumo && mood == _PugMood.attention) {
+      if (phase < 0.30 || (phase >= 0.60 && phase < 0.82)) {
+        return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-1.png';
+      }
+      return 'assets/lumo/sequence/attention-loop/lumo-attention-loop-2.png';
     }
     return assetPath(mood);
   }
