@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.0.1+1
+version: 0.0.2-beta.1+2
 
 environment:
   sdk: ^3.12.2
@@ -78,6 +78,14 @@ flutter:
     - assets/pug/sequence/attention-loop/pug-attention-loop-2.png
     - assets/pug/sequence/attention-loop/pug-attention-loop-3.png
     - assets/pug/sequence/attention-loop/pug-attention-loop-4.png
+    - assets/pug/sequence/idle-to-working/pug-idle-to-working-1.png
+    - assets/pug/sequence/idle-to-working/pug-idle-to-working-2.png
+    - assets/pug/sequence/idle-to-working/pug-idle-to-working-3.png
+    - assets/pug/sequence/idle-to-working/pug-idle-to-working-4.png
+    - assets/pug/sequence/working-to-completed/pug-working-to-completed-1.png
+    - assets/pug/sequence/working-to-completed/pug-working-to-completed-2.png
+    - assets/pug/sequence/working-to-completed/pug-working-to-completed-3.png
+    - assets/pug/sequence/working-to-completed/pug-working-to-completed-4.png
     - assets/lumo/lumo-idle.png
     - assets/lumo/lumo-working.png
     - assets/lumo/lumo-completed.png

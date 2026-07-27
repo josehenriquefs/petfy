@@ -1,0 +1,50 @@
+name: Windows Tester Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build Windows tester zip
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate Flutter app
+        shell: cmd
+        run: |
+          pet.cmd analyze
+          pet.cmd test
+
+      - name: Validate event bridge
+        shell: cmd
+        run: npm run test:bridge
+
+      - name: Package Windows tester zip
+        shell: cmd
+        run: pet.cmd package-windows
+
+      - name: Upload tester package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Petfy-windows-tester
+          path: dist/windows/*.zip
+          if-no-files-found: error
+          retention-days: 14

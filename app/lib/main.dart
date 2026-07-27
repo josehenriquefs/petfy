@@ -698,19 +698,7 @@ class _PetHomePageState extends State<PetHomePage> {
 
     events.addAll(await _readActiveSessionEvents());
 
-    events.sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
-
-    final distinct = <String, CodexPetEvent>{};
-    for (final event in events) {
-      // Events are newest first. A later event for the same turn resolves an
-      // older working or approval state without affecting other turns in the
-      // same workspace.
-      distinct.putIfAbsent(event.taskKey, () => event);
-    }
-
-    final ordered = distinct.values.toList()
-      ..sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
-    return ordered.take(8).toList(growable: false);
+    return reconcileCodexPetEvents(events).take(8).toList(growable: false);
   }
 
   Future<List<CodexPetEvent>> _readActiveSessionEvents() async {
@@ -1794,7 +1782,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     final cycleMilliseconds = isAttentionPose
         ? _PetfyMascot.attentionLoopDuration.inMilliseconds
         : widget.mascot.hasPoseAnimations
-        ? 20000
+        ? widget.mascot.ambientLoopDuration.inMilliseconds
         : 1600;
     final elapsed = widget.mascot.hasPoseAnimations
         ? DateTime.now().difference(_poseLoopStartedAt).inMilliseconds %
@@ -2119,6 +2107,10 @@ enum _PetfyMascot {
 
   static const attentionLoopDuration = Duration(milliseconds: 4800);
 
+  Duration get ambientLoopDuration => this == _PetfyMascot.pug
+      ? const Duration(seconds: 42)
+      : const Duration(seconds: 20);
+
   static const options = [
     _SelectOption(value: 'pug', label: 'Pug'),
     _SelectOption(value: 'lumo', label: 'Lumo'),
@@ -2200,6 +2192,14 @@ enum _PetfyMascot {
         'assets/pug/sequence/attention-loop/pug-attention-loop-2.png',
         'assets/pug/sequence/attention-loop/pug-attention-loop-3.png',
         'assets/pug/sequence/attention-loop/pug-attention-loop-4.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-1.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-2.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-3.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-4.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-1.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-2.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-3.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-4.png',
       ],
     };
   }
@@ -2210,6 +2210,17 @@ enum _PetfyMascot {
     required Duration fallback,
   }) {
     if (!hasPoseAnimations) {
+      return fallback;
+    }
+    if (this == _PetfyMascot.pug) {
+      if (from == _PugMood.completed && to == _PugMood.idle) {
+        return const Duration(milliseconds: 4800);
+      }
+      if ((from == _PugMood.idle && to == _PugMood.working) ||
+          (from == _PugMood.working && to == _PugMood.completed) ||
+          (from == _PugMood.completed && to == _PugMood.working)) {
+        return const Duration(milliseconds: 2800);
+      }
       return fallback;
     }
     if (this == _PetfyMascot.lumo) {
@@ -2240,9 +2251,35 @@ enum _PetfyMascot {
     if (!hasPoseAnimations) {
       return const [];
     }
-    // Pug has authored loops in this iteration. Its state transitions retain
-    // the destination pose until dedicated in-between frames are authored.
     if (this == _PetfyMascot.pug) {
+      const idleToWorking = [
+        'assets/pug/sequence/idle-loop/pug-idle-loop-1.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-1.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-2.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-3.png',
+        'assets/pug/sequence/idle-to-working/pug-idle-to-working-4.png',
+        'assets/pug/sequence/working-loop/pug-working-loop-1.png',
+      ];
+      const workingToCompleted = [
+        'assets/pug/sequence/working-loop/pug-working-loop-1.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-1.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-2.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-3.png',
+        'assets/pug/sequence/working-to-completed/pug-working-to-completed-4.png',
+        'assets/pug/sequence/completed-loop/pug-completed-loop-1.png',
+      ];
+      if (from == _PugMood.idle && to == _PugMood.working) {
+        return idleToWorking;
+      }
+      if (from == _PugMood.working && to == _PugMood.completed) {
+        return workingToCompleted;
+      }
+      if (from == _PugMood.completed && to == _PugMood.working) {
+        return workingToCompleted.reversed.toList();
+      }
+      if (from == _PugMood.completed && to == _PugMood.idle) {
+        return [...workingToCompleted.reversed, ...idleToWorking.reversed];
+      }
       return const [];
     }
 
@@ -2327,9 +2364,34 @@ enum _PetfyMascot {
       return frames[index];
     }
     if (this == _PetfyMascot.pug) {
-      final frame = math.min((phase * 4).floor() + 1, 4);
-      return 'assets/pug/sequence/${mood.assetName}-loop/'
-          'pug-${mood.assetName}-loop-$frame.png';
+      // Generated Pug sprites have deliberately different poses. Keep every
+      // loop inside its closest-framed family so a pose change never reads as
+      // a camera zoom or a jump across the floating-pet canvas.
+      if (mood == _PugMood.idle) {
+        final frame = phase >= 0.84 && phase < 0.92 ? 4 : 1;
+        return 'assets/pug/sequence/idle-loop/pug-idle-loop-$frame.png';
+      }
+      if (mood == _PugMood.working) {
+        final frame = phase >= 0.84 && phase < 0.92 ? 4 : 1;
+        return 'assets/pug/sequence/working-loop/pug-working-loop-$frame.png';
+      }
+      if (mood == _PugMood.completed) {
+        // Keep the new completed pose at rest, then play one restrained blink.
+        final frame = switch (phase) {
+          < 0.72 => 1,
+          < 0.80 => 2,
+          < 0.88 => 3,
+          < 0.96 => 4,
+          _ => 1,
+        };
+        return 'assets/pug/sequence/completed-loop/'
+            'pug-completed-loop-$frame.png';
+      }
+      if (mood == _PugMood.attention) {
+        final frame = phase >= 0.62 && phase < 0.84 ? 4 : 1;
+        return 'assets/pug/sequence/attention-loop/'
+            'pug-attention-loop-$frame.png';
+      }
     }
     if (this == _PetfyMascot.et && mood == _PugMood.idle) {
       // Pause at rest for most of the cycle so the greeting feels occasional.
@@ -2478,21 +2540,34 @@ class _PetAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Keep exactly one pose mounted. Cross-fading generated PNGs made their
-    // different lighting overlap and read as a distracting blink.
     final assetPath = mascot.displayAssetPath(
       mood: mood,
       previousMood: previousMood,
       transitionProgress: transitionProgress,
       phase: phase,
     );
+    final avatar = _PetAvatarImage(
+      key: ValueKey(assetPath),
+      assetPath: assetPath,
+      mood: mood,
+      phase: phase,
+    );
     return RepaintBoundary(
-      child: _PetAvatarImage(
-        key: ValueKey(assetPath),
-        assetPath: assetPath,
-        mood: mood,
-        phase: phase,
-      ),
+      child: mascot == _PetfyMascot.pug
+          ? AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              reverseDuration: const Duration(milliseconds: 180),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              layoutBuilder: (currentChild, previousChildren) => Stack(
+                alignment: Alignment.center,
+                children: [...previousChildren, ?currentChild],
+              ),
+              child: avatar,
+            )
+          : avatar,
     );
   }
 }
@@ -2511,26 +2586,47 @@ class _PetAvatarImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      assetPath,
-      cacheWidth: 384,
-      fit: BoxFit.contain,
-      gaplessPlayback: true,
-      filterQuality: FilterQuality.medium,
-      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-        if (wasSynchronouslyLoaded || frame != null) {
-          return child;
-        }
-        return CustomPaint(
-          painter: _PetAvatarPainter(mood: mood, phase: phase),
-        );
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return CustomPaint(
-          painter: _PetAvatarPainter(mood: mood, phase: phase),
-        );
-      },
+    return FractionalTranslation(
+      translation: _pugFrameOffset(assetPath),
+      child: Image.asset(
+        assetPath,
+        cacheWidth: 384,
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.medium,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return CustomPaint(
+            painter: _PetAvatarPainter(mood: mood, phase: phase),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return CustomPaint(
+            painter: _PetAvatarPainter(mood: mood, phase: phase),
+          );
+        },
+      ),
     );
+  }
+
+  // These generated alternates have the same scale but slightly different
+  // canvas origins. Compensate only those origins; never scale the Pug.
+  Offset _pugFrameOffset(String path) {
+    if (!path.startsWith('assets/pug/')) {
+      return Offset.zero;
+    }
+    if (path.endsWith('idle-loop-4.png')) {
+      return const Offset(0.050, -0.030);
+    }
+    if (path.endsWith('working-loop-4.png')) {
+      return const Offset(0.024, -0.018);
+    }
+    if (path.endsWith('attention-loop-4.png')) {
+      return const Offset(-0.030, -0.050);
+    }
+    return Offset.zero;
   }
 }
 
@@ -4224,7 +4320,7 @@ class _AnimationPreviewPanelState extends State<_AnimationPreviewPanel>
     _mascot = widget.initialMascot;
     _poseController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20),
+      duration: _mascot.ambientLoopDuration,
     )..repeat();
     _transitionController = AnimationController(vsync: this, value: 1)
       ..addStatusListener((status) {
@@ -4247,6 +4343,10 @@ class _AnimationPreviewPanelState extends State<_AnimationPreviewPanel>
       _mood = _PugMood.idle;
       _previousMood = null;
       _transitionController.value = 1;
+      _poseController
+        ..duration = mascot.ambientLoopDuration
+        ..value = 0
+        ..repeat();
     });
   }
 
@@ -4280,7 +4380,8 @@ class _AnimationPreviewPanelState extends State<_AnimationPreviewPanel>
       return _poseController.value;
     }
     return (_poseController.value *
-            (20000 / _PetfyMascot.attentionLoopDuration.inMilliseconds)) %
+            (_mascot.ambientLoopDuration.inMilliseconds /
+                _PetfyMascot.attentionLoopDuration.inMilliseconds)) %
         1;
   }
 
@@ -5361,6 +5462,16 @@ class CodexPetEvent {
     return cwd.isNotEmpty ? 'workspace:$cwd' : '$projectName:$timestamp';
   }
 
+  bool get hasExplicitTurn => turnId != null && turnId!.isNotEmpty;
+
+  String get threadWorkspaceKey {
+    final thread = threadId?.trim();
+    if (thread != null && thread.isNotEmpty) {
+      return 'thread:$thread:${cwd.trim()}';
+    }
+    return cwd.isNotEmpty ? 'workspace:${cwd.trim()}' : 'project:$projectName';
+  }
+
   String get soundKey => '$taskKey:$type:$timestamp:$message';
 
   DateTime get occurredAt =>
@@ -5398,6 +5509,57 @@ class CodexPetEvent {
   String get sourceLabel => _sourceLabel(source);
 
   Color get sourceColor => _sourceColor(source);
+}
+
+List<CodexPetEvent> reconcileCodexPetEvents(
+  Iterable<CodexPetEvent> input, {
+  DateTime? now,
+}) {
+  final referenceTime = now?.toUtc() ?? DateTime.now().toUtc();
+  final ordered = input.toList()
+    ..sort((left, right) => right.occurredAt.compareTo(left.occurredAt));
+
+  final retained = <CodexPetEvent>[];
+  final resolvedTaskKeys = <String>{};
+  final seenTaskKeys = <String>{};
+  final fallbackResolutions = <String, List<CodexPetEvent>>{};
+
+  for (final event in ordered) {
+    // A session scan is advisory. When it cannot observe a completion, keep a
+    // working task visible only while the turn is still plausibly active.
+    if (event.type == 'task.started' &&
+        referenceTime.difference(event.occurredAt) >
+            const Duration(minutes: 15)) {
+      continue;
+    }
+
+    if (seenTaskKeys.contains(event.taskKey)) {
+      continue;
+    }
+
+    if (event.type == 'task.started' || event.type == 'task.waiting_approval') {
+      final priorResolution =
+          fallbackResolutions[event.threadWorkspaceKey]?.any(
+            (resolution) => !resolution.hasExplicitTurn,
+          ) ??
+          false;
+      if (resolvedTaskKeys.contains(event.taskKey) || priorResolution) {
+        continue;
+      }
+    }
+
+    seenTaskKeys.add(event.taskKey);
+    retained.add(event);
+
+    if (event.isResolutionEvent) {
+      resolvedTaskKeys.add(event.taskKey);
+      fallbackResolutions
+          .putIfAbsent(event.threadWorkspaceKey, () => <CodexPetEvent>[])
+          .add(event);
+    }
+  }
+
+  return retained;
 }
 
 class EventLogEntry {

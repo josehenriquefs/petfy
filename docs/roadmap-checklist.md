@@ -55,19 +55,20 @@ This checklist tracks the next product improvements. Mark items as done when the
 
 - [x] Add authored attention animations for classic ET and Lumo.
 - [x] Add an in-app animation preview/debug surface.
-- [ ] Validate `task.started` in a real VS Code extension session.
-- [ ] Validate attention events during a real Codex approval flow.
-- [ ] Review duplicate/stale task behavior after real cross-surface testing.
-- [ ] Compress mascot animation assets before public distribution.
+- [x] Validate `task.started` in a real VS Code extension session.
+- [x] Review duplicate/stale task behavior after real cross-surface testing.
+- [x] Compress mascot animation assets before public distribution.
 - [ ] Validate Windows build and startup integration on a Windows desktop.
 - [ ] Validate Linux build and startup integration on a Linux desktop.
 - [x] Design final installer strategy for macOS, Windows, and Linux.
 - [x] Prepare GitHub Releases artifact naming and release notes template.
 - [x] Automatic updater feed foundation.
+- [x] Manual GitHub Actions workflow that produces a Windows tester artifact.
 
 ## Later Backlog
 
-- [ ] Authored animation timelines for the Pug.
+- [ ] Validate attention events during a real Codex approval flow.
+- [x] Authored animation timelines for the Pug.
 - [ ] Task details screen.
 - [ ] Advanced individual cleanup actions.
 - [ ] macOS code signing and notarization.

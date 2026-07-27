@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.0.2-beta.1 - 2026-07-27
 
 ### Fixed
 
@@ -18,6 +18,12 @@
 
 ### Added
 
+- Windows tester packaging workflow. It builds a downloadable ZIP on GitHub
+  Actions with `install.cmd`, `test-event.cmd`, diagnostics, and uninstall.
+- Task reconciliation tests covering completion, follow-up turns, stale work,
+  and completion events without turn metadata.
+- Authored Pug state timelines and compressed 512 px mascot assets, reducing
+  the local macOS build from 112.6 MB to 58.1 MB.
 - Bridge lifecycle tests for started, attention, and completion events.
 - `./pet test-start` for a local Working-state smoke test.
 - A selectable ET mascot with idle, working, completed, and attention states.

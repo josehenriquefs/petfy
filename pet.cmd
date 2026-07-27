@@ -3,7 +3,7 @@ setlocal EnableExtensions
 
 set "REPO_ROOT=%~dp0"
 if "%REPO_ROOT:~-1%"=="\" set "REPO_ROOT=%REPO_ROOT:~0,-1%"
-set "FLUTTER=%REPO_ROOT%\scripts\flutter-local"
+set "FLUTTER_PATH="
 set "STATE_DIR=%USERPROFILE%\.petfy"
 
 where node.exe >nul 2>nul
@@ -26,15 +26,21 @@ if "%COMMAND%"=="-h" goto :help
 
 if "%COMMAND%"=="dev-windows" (
   call :require_node
+  if errorlevel 1 exit /b %ERRORLEVEL%
+  call :require_flutter
+  if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER%" run -d windows --dart-define="PETFY_ROOT=%REPO_ROOT%" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
+  "%FLUTTER_PATH%" run -d windows --dart-define="PETFY_ROOT=%REPO_ROOT%" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   exit /b %ERRORLEVEL%
 )
 
 if "%COMMAND%"=="install-windows" (
   call :require_node
+  if errorlevel 1 exit /b %ERRORLEVEL%
+  call :require_flutter
+  if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER%" build windows --release --dart-define="PETFY_ROOT=%LOCALAPPDATA%\Petfy" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
+  "%FLUTTER_PATH%" build windows --release --dart-define="PETFY_ROOT=%LOCALAPPDATA%\Petfy" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%"
   node scripts\windows-app.js install
@@ -43,8 +49,11 @@ if "%COMMAND%"=="install-windows" (
 
 if "%COMMAND%"=="package-windows" (
   call :require_node
+  if errorlevel 1 exit /b %ERRORLEVEL%
+  call :require_flutter
+  if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER%" build windows --release --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
+  "%FLUTTER_PATH%" build windows --release --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%"
   node scripts\package-windows.js
@@ -76,14 +85,18 @@ if "%COMMAND%"=="doctor-windows" (
 )
 
 if "%COMMAND%"=="analyze" (
+  call :require_flutter
+  if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER%" analyze
+  "%FLUTTER_PATH%" analyze
   exit /b %ERRORLEVEL%
 )
 
 if "%COMMAND%"=="test" (
+  call :require_flutter
+  if errorlevel 1 exit /b %ERRORLEVEL%
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER%" test
+  "%FLUTTER_PATH%" test
   exit /b %ERRORLEVEL%
 )
 
@@ -94,6 +107,25 @@ goto :help
 :require_node
 if "%NODE_PATH%"=="" (
   echo Node.js was not found in PATH.
+  exit /b 1
+)
+exit /b 0
+
+:require_flutter
+if "%FLUTTER_PATH%"=="" (
+  for /f "usebackq delims=" %%F in (`where flutter.bat 2^>nul`) do (
+    set "FLUTTER_PATH=%%F"
+    goto :flutter_found
+  )
+  for /f "usebackq delims=" %%F in (`where flutter 2^>nul`) do (
+    set "FLUTTER_PATH=%%F"
+    goto :flutter_found
+  )
+)
+:flutter_found
+if "%FLUTTER_PATH%"=="" (
+  echo Flutter was not found in PATH.
+  echo Install Flutter for Windows, then run this command again.
   exit /b 1
 )
 exit /b 0

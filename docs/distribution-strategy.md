@@ -71,7 +71,8 @@ Open decision:
 Current state:
 
 - `pet.cmd package-windows` is planned for native Windows.
-- Package script creates a zip with `install.cmd`, `diagnostics.cmd`, and `uninstall.cmd`.
+- Package script creates a zip with `install.cmd`, `diagnostics.cmd`,
+  `test-event.cmd`, and `uninstall.cmd`.
 - Installer copies app to `%LOCALAPPDATA%\Petfy`, creates `%LOCALAPPDATA%\Petfy\petfy.cmd`, installs a Startup folder shortcut, installs Codex integration, and starts Petfy.
 - Windows hooks use the Node event handler `scripts/petfy-event.js` instead of shell scripts.
 
@@ -170,7 +171,10 @@ Release notes template:
 Unzip, open `install.command`, then approve macOS prompts if shown.
 
 ### Windows
-Unzip, double-click `install.cmd`.
+Unzip, double-click `install.cmd`, then double-click `test-event.cmd` to
+confirm the floating Petfy notification. If Node.js is missing, the installer
+opens the official LTS download page and asks the user to run it again after
+installation.
 
 ### Linux
 Extract, run `./install.sh`.

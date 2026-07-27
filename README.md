@@ -4,7 +4,7 @@ Floating desktop companion for Codex task notifications.
 
 Petfy is a small Flutter desktop app that stays above your windows, listens for Codex lifecycle events, and lets you jump back to the project that just finished. It is built for people who use Codex across the CLI, Desktop app, and VS Code extension and want one lightweight visual signal for completed work or required attention.
 
-Current version: `v0.0.1`
+Current version: `v0.0.2-beta.1`
 
 ## Project Documents
 
@@ -316,8 +316,23 @@ The zip contains:
 - Windows Flutter release bundle.
 - `install.cmd`
 - `diagnostics.cmd`
+- `test-event.cmd`
 - `uninstall.cmd`
 - Petfy bridge/runtime scripts
+
+## Windows Tester Artifact
+
+Without a local Windows machine, generate a tester package through GitHub:
+
+1. Open the repository's **Actions** tab.
+2. Run **Windows Tester Package** manually.
+3. Download the `Petfy-windows-tester` artifact when the workflow completes.
+4. Send the extracted ZIP to the tester. They double-click `install.cmd`, then
+   `test-event.cmd` to confirm the floating completion notification.
+
+The tester needs Node.js LTS for Codex hooks. When it is missing, the installer
+opens the official Node.js download page and asks the user to run it again after
+installation.
 - README, changelog, and license
 
 The user extracts it and double-clicks:

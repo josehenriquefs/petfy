@@ -37,6 +37,7 @@ copyFile("CHANGELOG.md");
 
 fs.writeFileSync(path.join(packageDir, "install.cmd"), installerScript());
 fs.writeFileSync(path.join(packageDir, "diagnostics.cmd"), diagnosticsScript());
+fs.writeFileSync(path.join(packageDir, "test-event.cmd"), testEventScript());
 fs.writeFileSync(path.join(packageDir, "uninstall.cmd"), uninstallScript());
 fs.writeFileSync(path.join(packageDir, "README-INSTALL.txt"), installReadme());
 
@@ -101,7 +102,10 @@ set "LOG_PATH=%STATE_DIR%\\install.log"
 where node.exe >nul 2>nul
 if errorlevel 1 (
   echo Node.js was not found.
-  echo Install Node.js, then run this installer again.
+  echo Petfy needs Node.js to receive Codex events.
+  echo The official Node.js download page will open now.
+  start "" "https://nodejs.org/en/download"
+  echo After installing the LTS version, run install.cmd again.
   pause
   exit /b 1
 )
@@ -181,6 +185,48 @@ pause
 `;
 }
 
+function testEventScript() {
+  return `@echo off
+setlocal EnableExtensions
+
+set "INSTALL_ROOT=%LOCALAPPDATA%\\Petfy"
+set "STATE_DIR=%USERPROFILE%\\.petfy"
+set "EVENT_HANDLER=%INSTALL_ROOT%\\scripts\\petfy-event.js"
+
+if not exist "%EVENT_HANDLER%" (
+  echo Petfy is not installed yet.
+  echo Double-click install.cmd first.
+  pause
+  exit /b 1
+)
+
+where node.exe >nul 2>nul
+if errorlevel 1 (
+  echo Node.js was not found.
+  start "" "https://nodejs.org/en/download"
+  echo Install the LTS version, then run test-event.cmd again.
+  pause
+  exit /b 1
+)
+
+for /f "usebackq delims=" %%N in (\`where node.exe\`) do (
+  set "NODE_BIN=%%N"
+  goto :found_node
+)
+:found_node
+
+if not exist "%STATE_DIR%" mkdir "%STATE_DIR%"
+pushd "%USERPROFILE%"
+set "PETFY_STATE_DIR=%STATE_DIR%"
+"%NODE_BIN%" "%EVENT_HANDLER%" agent-turn-complete
+popd
+
+echo A Petfy test completion event was sent.
+echo Look for the green Petfy notification. Double-click diagnostics.cmd if it does not appear.
+pause
+`;
+}
+
 function uninstallScript() {
   return `@echo off
 setlocal EnableExtensions
@@ -208,12 +254,13 @@ function installReadme() {
 Included helpers:
 
 - diagnostics.cmd: verifies app, runtime, hooks, notify, launcher, and startup shortcut.
+- test-event.cmd: sends a local completion event to confirm Petfy is visible.
 - uninstall.cmd: removes the app and startup shortcut while keeping %USERPROFILE%\\.petfy event history.
 
 Requirements:
 
 - Windows desktop session.
-- Node.js available in PATH.
+- Node.js LTS. If it is missing, install.cmd opens the official download page.
 `;
 }
 

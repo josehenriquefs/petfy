@@ -1,6 +1,6 @@
 # Petfy Current Status
 
-Last updated: 2026-07-23
+Last updated: 2026-07-27
 
 Use this document as the starting point when resuming work on Petfy.
 
@@ -21,6 +21,8 @@ macOS. The repository uses a local Flutter SDK under `.tooling/flutter`.
 - Focus a task workspace in VS Code.
 - Completion event bridge through Codex `notify` and direct Petfy hooks.
 - Baseline running-state capture from `UserPromptSubmit` for CLI and VS Code.
+- Event reconciliation that resolves a completed turn, retains a newer
+  follow-up turn, and hides working turns stale for more than 15 minutes.
 - Attention event normalization when the Codex surface emits `Notification`.
 - First-run setup, diagnostics, repair action, auto-start, local updater handoff,
   package scripts, and local macOS installation.
@@ -36,26 +38,26 @@ macOS. The repository uses a local Flutter SDK under `.tooling/flutter`.
 
 Available mascots:
 
-- Pug: four state assets, but no authored pose timelines yet.
+- Pug: authored idle, working, completed, and attention loops plus state
+  timelines.
 - Lumo: authored idle, working, and completed pose loops plus state timelines.
 - Classic ET: authored idle, working, and completed pose loops plus state timelines.
 
-For Lumo and classic ET:
+For all current mascots:
 
 - `idle -> working`: picks up and opens a laptop.
 - `working -> completed`: closes the laptop and celebrates.
 - `completed -> working`: uses the completion timeline in reverse.
 - `completed -> idle`: returns through the work and idle timeline.
-- Idle, working, and completed loops wait about 16.8 seconds before a brief
-  action. A state or mascot change resets that delay.
+- Idle, working, and completed loops wait before a brief action. The Pug uses
+  a slower 42-second ambient cycle; Lumo and classic ET use 20-second cycles.
 - Attention has authored immediate two-pose loops for classic ET and Lumo,
   alongside the orange app-level badge. The loop intentionally has no long
   ambient delay because it represents a pending user action.
 
-The renderer intentionally mounts only one PNG at a time. A previous crossfade
-between generated assets created visible flashing because their lighting and
-silhouettes differed. Do not reintroduce crossfading without validating it at
-the real floating-pet size.
+Lumo and classic ET mount one PNG at a time. The Pug uses a short, no-scale
+cross-fade with per-frame origin offsets to soften authored pose changes while
+avoiding the apparent camera zoom caused by mismatched sprite canvases.
 
 ## Event Coverage And Limitations
 
@@ -66,7 +68,6 @@ Reliable primary behavior:
 
 Still needs validation:
 
-- `task.started` in a real VS Code extension session.
 - `Notification` / `task.waiting_approval` in a real approval flow.
 - Desktop running-state and attention coverage. Desktop completion is supported,
   but running detection is not a current promise.
@@ -113,21 +114,22 @@ confirm hook coverage.
   classic ET and Lumo.
 - [x] Add an animation preview/debug surface in Settings so each mascot state
   and transition can be reviewed without creating fake Codex events.
-- [ ] Validate `task.started` in a real VS Code session.
-- [ ] Validate attention in a real approval-required Codex session.
-- [ ] Improve stale or duplicate task handling based on those real sessions.
+- [x] Validate `task.started` in a real VS Code session.
+- [x] Improve stale or duplicate task handling based on those real sessions.
 
 ### Animation Follow-up
 
-- [ ] Add authored pose timelines for the Pug: idle, working, completed, and
+- [x] Add authored pose timelines for the Pug: idle, working, completed, and
   attention.
-- [ ] Compress and resize mascot assets for distribution. The macOS release
-  bundle is currently roughly 90 MB, largely because of the animation PNGs.
+- [x] Compress and resize mascot assets for distribution. Active assets now
+  use a 512 px maximum and reduced the local macOS build from 112.6 MB to
+  58.1 MB.
 - [ ] Consider a rigged/Rive animation pipeline only after the current sprite
   workflow has been evaluated for quality, size, and maintainability.
 
 ### Product And Distribution
 
+- [ ] Validate attention in a real approval-required Codex session.
 - [ ] Improve first-run setup copy and recovery for non-developer users.
 - [ ] Validate Linux build, desktop entry, and autostart on a real Linux desktop.
 - [ ] Validate Windows build, startup integration, and VS Code focus on Windows.
