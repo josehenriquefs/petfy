@@ -1414,6 +1414,7 @@ class _PetHomePageState extends State<PetHomePage> {
       _PanelView.settingsNotifications => 470.0,
       _PanelView.settingsIntegration => 420.0,
       _PanelView.settingsAdvanced => 390.0,
+      _PanelView.animationPreview => 410.0,
       _PanelView.eventLog => 430.0,
       _PanelView.debugLog => 430.0,
       _PanelView.setup => 430.0,
@@ -1587,6 +1588,14 @@ class _PetHomePageState extends State<PetHomePage> {
                 placement: _popoverPlacement,
               );
               _loadDiagnostics();
+            },
+            onOpenAnimationPreview: () {
+              setState(() => _panelView = _PanelView.animationPreview);
+              WindowController.setExpanded(
+                true,
+                height: _expandedWindowHeight(),
+                placement: _popoverPlacement,
+              );
             },
             onDismissSetupGuide: () {
               setState(() {
@@ -2811,6 +2820,7 @@ class _TaskPopover extends StatelessWidget {
     required this.onResetPetPosition,
     required this.onRepairSetup,
     required this.onOpenDiagnostics,
+    required this.onOpenAnimationPreview,
     required this.onDismissSetupGuide,
     required this.onQuit,
   });
@@ -2868,6 +2878,7 @@ class _TaskPopover extends StatelessWidget {
   final VoidCallback onResetPetPosition;
   final VoidCallback onRepairSetup;
   final VoidCallback onOpenDiagnostics;
+  final VoidCallback onOpenAnimationPreview;
   final VoidCallback onDismissSetupGuide;
   final VoidCallback onQuit;
 
@@ -2876,6 +2887,7 @@ class _TaskPopover extends StatelessWidget {
     final isSubScreen =
         view == _PanelView.diagnostics ||
         view == _PanelView.settings ||
+        view == _PanelView.animationPreview ||
         view.isSettingsDetail ||
         view == _PanelView.eventLog ||
         view == _PanelView.debugLog ||
@@ -2933,11 +2945,11 @@ class _TaskPopover extends StatelessWidget {
                   children: [
                     if (isSubScreen)
                       IconButton(
-                        tooltip: view.isSettingsDetail
+                        tooltip: view.returnsToSettings
                             ? 'Back to settings'
                             : 'Back to tasks',
                         onPressed: () => onViewChanged(
-                          view.isSettingsDetail
+                          view.returnsToSettings
                               ? _PanelView.settings
                               : _PanelView.activity,
                         ),
@@ -2965,13 +2977,13 @@ class _TaskPopover extends StatelessWidget {
                         icon: const Icon(Icons.close, size: 20),
                       ),
                     ] else if (view == _PanelView.settings ||
-                        view.isSettingsDetail) ...[
+                        view.returnsToSettings) ...[
                       IconButton(
-                        tooltip: view.isSettingsDetail
+                        tooltip: view.returnsToSettings
                             ? 'Back to settings'
                             : 'Back to tasks',
                         onPressed: () => onViewChanged(
-                          view.isSettingsDetail
+                          view.returnsToSettings
                               ? _PanelView.settings
                               : _PanelView.activity,
                         ),
@@ -3131,6 +3143,11 @@ class _TaskPopover extends StatelessWidget {
                         colors: colors,
                         onOpenSection: onViewChanged,
                       ),
+                    ] else if (view == _PanelView.animationPreview) ...[
+                      _AnimationPreviewPanel(
+                        colors: colors,
+                        initialMascot: mascot,
+                      ),
                     ] else if (view.isSettingsDetail) ...[
                       _SettingsDetailPanel(
                         section: view.settingsSection,
@@ -3173,6 +3190,7 @@ class _TaskPopover extends StatelessWidget {
                         onOpenUpdate: onOpenUpdate,
                         onResetPetPosition: onResetPetPosition,
                         onOpenDiagnostics: onOpenDiagnostics,
+                        onOpenAnimationPreview: onOpenAnimationPreview,
                         onQuit: onQuit,
                       ),
                     ] else ...[
@@ -3224,6 +3242,7 @@ class _TaskPopover extends StatelessWidget {
       _PanelView.settingsNotifications => 'Notifications',
       _PanelView.settingsIntegration => 'Integration',
       _PanelView.settingsAdvanced => 'Advanced',
+      _PanelView.animationPreview => 'Animation Preview',
       _PanelView.eventLog => 'Event Log',
       _PanelView.debugLog => 'Debug Log',
       _PanelView.setup => 'Setup',
@@ -3262,6 +3281,7 @@ enum _PanelView {
   settingsNotifications,
   settingsIntegration,
   settingsAdvanced,
+  animationPreview,
   eventLog,
   debugLog,
   setup,
@@ -3276,6 +3296,9 @@ extension _PanelViewSettings on _PanelView {
     _PanelView.settingsAdvanced => true,
     _ => false,
   };
+
+  bool get returnsToSettings =>
+      isSettingsDetail || this == _PanelView.animationPreview;
 
   _SettingsSection get settingsSection => switch (this) {
     _PanelView.settingsGeneral => _SettingsSection.general,
@@ -4127,6 +4150,203 @@ class _SettingsCategoryTile extends StatelessWidget {
   }
 }
 
+class _AnimationPreviewPanel extends StatefulWidget {
+  const _AnimationPreviewPanel({
+    required this.colors,
+    required this.initialMascot,
+  });
+
+  final PetfyPanelColors colors;
+  final _PetfyMascot initialMascot;
+
+  @override
+  State<_AnimationPreviewPanel> createState() => _AnimationPreviewPanelState();
+}
+
+class _AnimationPreviewPanelState extends State<_AnimationPreviewPanel>
+    with TickerProviderStateMixin {
+  late final AnimationController _poseController;
+  late final AnimationController _transitionController;
+  late _PetfyMascot _mascot;
+  _PugMood _mood = _PugMood.idle;
+  _PugMood? _previousMood;
+
+  @override
+  void initState() {
+    super.initState();
+    _mascot = widget.initialMascot;
+    _poseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    )..repeat();
+    _transitionController = AnimationController(vsync: this, value: 1)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed && mounted) {
+          setState(() => _previousMood = null);
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _poseController.dispose();
+    _transitionController.dispose();
+    super.dispose();
+  }
+
+  void _selectMascot(_PetfyMascot mascot) {
+    setState(() {
+      _mascot = mascot;
+      _mood = _PugMood.idle;
+      _previousMood = null;
+      _transitionController.value = 1;
+    });
+  }
+
+  void _selectMood(_PugMood mood) {
+    if (mood == _mood) {
+      _replay();
+      return;
+    }
+    setState(() {
+      _previousMood = _mood;
+      _mood = mood;
+      _transitionController.duration = _mascot.transitionDuration(
+        from: _previousMood!,
+        to: mood,
+        fallback: mood.transitionDuration,
+      );
+      _transitionController.forward(from: 0);
+    });
+  }
+
+  void _replay() {
+    setState(() => _previousMood = null);
+    _poseController
+      ..stop()
+      ..value = 0
+      ..repeat();
+  }
+
+  double get _phase {
+    if (_mood != _PugMood.attention) {
+      return _poseController.value;
+    }
+    return (_poseController.value * (20000 / 1800)) % 1;
+  }
+
+  String get _stateDescription => switch (_mood) {
+    _PugMood.idle => 'Ambient idle pose loop',
+    _PugMood.working => 'Working pose loop',
+    _PugMood.completed => 'Completed pose loop',
+    _PugMood.attention => 'Immediate action-needed loop',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_poseController, _transitionController]),
+      builder: (context, child) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.face, size: 18, color: widget.colors.icon),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<_PetfyMascot>(
+                        value: _mascot,
+                        isExpanded: true,
+                        dropdownColor: widget.colors.menuBackground,
+                        style: TextStyle(
+                          color: widget.colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        items: _PetfyMascot.values
+                            .map(
+                              (mascot) => DropdownMenuItem(
+                                value: mascot,
+                                child: Text(mascot.label),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (mascot) {
+                          if (mascot != null) {
+                            _selectMascot(mascot);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Replay current animation',
+                    onPressed: _replay,
+                    icon: const Icon(Icons.replay, size: 20),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Container(
+                height: 174,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: widget.colors.surface,
+                  border: Border.all(color: widget.colors.border),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: _PetAvatar(
+                    mascot: _mascot,
+                    mood: _mood,
+                    previousMood: _previousMood,
+                    transitionProgress: _transitionController.value,
+                    phase: _phase,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _stateDescription,
+                style: TextStyle(color: widget.colors.subtleText, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<_PugMood>(
+                  showSelectedIcon: false,
+                  selected: {_mood},
+                  segments: const [
+                    ButtonSegment(value: _PugMood.idle, label: Text('Idle')),
+                    ButtonSegment(
+                      value: _PugMood.working,
+                      label: Text('Working'),
+                    ),
+                    ButtonSegment(
+                      value: _PugMood.completed,
+                      label: Text('Done'),
+                    ),
+                    ButtonSegment(
+                      value: _PugMood.attention,
+                      label: Text('Action'),
+                    ),
+                  ],
+                  onSelectionChanged: (selected) => _selectMood(selected.first),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _SettingsDetailPanel extends StatelessWidget {
   const _SettingsDetailPanel({
     required this.section,
@@ -4166,6 +4386,7 @@ class _SettingsDetailPanel extends StatelessWidget {
     required this.onOpenUpdate,
     required this.onResetPetPosition,
     required this.onOpenDiagnostics,
+    required this.onOpenAnimationPreview,
     required this.onQuit,
   });
 
@@ -4206,6 +4427,7 @@ class _SettingsDetailPanel extends StatelessWidget {
   final VoidCallback onOpenUpdate;
   final VoidCallback onResetPetPosition;
   final VoidCallback onOpenDiagnostics;
+  final VoidCallback onOpenAnimationPreview;
   final VoidCallback onQuit;
 
   @override
@@ -4278,6 +4500,12 @@ class _SettingsDetailPanel extends StatelessWidget {
           subtitle: 'Animate the pet while tasks change state.',
           value: animationsEnabled,
           onChanged: onAnimationsEnabledChanged,
+        ),
+        const SizedBox(height: 8),
+        _SettingsActionButton(
+          icon: Icons.play_circle_outline,
+          label: 'Preview animations',
+          onPressed: onOpenAnimationPreview,
         ),
         const SizedBox(height: 8),
         _SettingsSwitchTile(

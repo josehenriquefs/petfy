@@ -28,6 +28,9 @@ macOS. The repository uses a local Flutter SDK under `.tooling/flutter`.
   real target desktops.
 - Settings for mascot, size, startup position, sounds, auto-clear, dark panel,
   launch at login, animations, diagnostics, and logs.
+- An Animation Preview subpanel in Settings > Appearance. It reuses the
+  production mascot renderer to review each mascot, state, and supported
+  transition without emitting test Codex events.
 
 ## Mascots And Animation State
 
@@ -108,7 +111,7 @@ confirm hook coverage.
 
 - [x] Add authored attention poses and a short immediate attention loop for
   classic ET and Lumo.
-- [ ] Add an animation preview/debug surface in Settings so each mascot state
+- [x] Add an animation preview/debug surface in Settings so each mascot state
   and transition can be reviewed without creating fake Codex events.
 - [ ] Validate `task.started` in a real VS Code session.
 - [ ] Validate attention in a real approval-required Codex session.
