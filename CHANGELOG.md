@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.2-beta.5 - 2026-07-27
+
+### Fixed
+
+- Windows now uses a borderless, compact native Petfy window instead of the
+  default Flutter `app` host window.
+- The Windows pet stays on top, expands for the task panel, and supports drag,
+  reset-position, and startup-position controls through the native channel.
+
 ## v0.0.2-beta.4 - 2026-07-27
 
 ### Fixed

@@ -3,8 +3,10 @@
 
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <flutter/method_channel.h>
 
 #include <memory>
+#include <string>
 
 #include "win32_window.h"
 
@@ -23,11 +25,25 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  void ConfigurePetWindow();
+  void ConfigureWindowChannel();
+  void BeginDrag();
+  void Drag();
+  void SetExpanded(const flutter::EncodableValue* arguments);
+  void SetStartupPosition(const flutter::EncodableValue* arguments);
+  void ResetPosition();
+  std::string PopoverPlacement() const;
+  void SetCompactFrame(int x, int y);
+
   // The project to run.
   flutter::DartProject project_;
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> window_channel_;
+  RECT compact_frame_{};
+  POINT drag_origin_{};
+  RECT drag_frame_{};
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_
