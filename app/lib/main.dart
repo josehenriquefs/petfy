@@ -5790,19 +5790,41 @@ class ProjectPaths {
       : Platform.environment['PETFY_STATE_DIR'] ?? _defaultStateDir;
 
   static String get _defaultStateDir {
-    final home = Platform.environment['HOME'];
-    if (home != null && home.isNotEmpty) {
+    final home = userHome;
+    if (home != null) {
       return '$home/.petfy';
     }
     return '$repoRoot/.state';
   }
 
   static String get _defaultRuntimeRoot {
-    final home = Platform.environment['HOME'];
-    if (home != null && home.isNotEmpty) {
+    final home = userHome;
+    if (home != null) {
       return '$home/Library/Application Support/Petfy';
     }
     return Directory.current.parent.absolute.path;
+  }
+
+  static String? get userHome {
+    final home = Platform.environment['HOME'];
+    if (home != null && home.isNotEmpty) {
+      return home;
+    }
+
+    final userProfile = Platform.environment['USERPROFILE'];
+    if (userProfile != null && userProfile.isNotEmpty) {
+      return userProfile;
+    }
+
+    final homeDrive = Platform.environment['HOMEDRIVE'];
+    final homePath = Platform.environment['HOMEPATH'];
+    if (homeDrive != null &&
+        homeDrive.isNotEmpty &&
+        homePath != null &&
+        homePath.isNotEmpty) {
+      return '$homeDrive$homePath';
+    }
+    return null;
   }
 
   static String get latestEventFile => '$stateDir/latest-event.json';
@@ -5835,42 +5857,33 @@ class ProjectPaths {
       '$repoRoot/scripts/install-codex-integration.js';
 
   static String get codexHooksFile {
-    final codexHome = Platform.environment['CODEX_HOME'];
-    final home = Platform.environment['HOME'];
-    if (codexHome != null && codexHome.isNotEmpty) {
-      return '$codexHome/hooks.json';
-    }
-    return '${home ?? repoRoot}/.codex/hooks.json';
+    return '$codexHome/hooks.json';
   }
 
   static String get codexConfigFile {
-    final codexHome = Platform.environment['CODEX_HOME'];
-    final home = Platform.environment['HOME'];
-    if (codexHome != null && codexHome.isNotEmpty) {
-      return '$codexHome/config.toml';
-    }
-    return '${home ?? repoRoot}/.codex/config.toml';
+    return '$codexHome/config.toml';
   }
 
   static String get codexSessionsDir {
-    final codexHome = Platform.environment['CODEX_HOME'];
-    final home = Platform.environment['HOME'];
-    if (codexHome != null && codexHome.isNotEmpty) {
-      return '$codexHome/sessions';
+    return '$codexHome/sessions';
+  }
+
+  static String get codexHome {
+    final definedCodexHome = Platform.environment['CODEX_HOME'];
+    if (definedCodexHome != null && definedCodexHome.isNotEmpty) {
+      return definedCodexHome;
     }
-    return '${home ?? repoRoot}/.codex/sessions';
+    return '${userHome ?? repoRoot}/.codex';
   }
 
   static String get launchAgentFile {
-    final home = Platform.environment['HOME'];
-    return '${home ?? repoRoot}/Library/LaunchAgents/dev.petfy.pet.plist';
+    return '${userHome ?? repoRoot}/Library/LaunchAgents/dev.petfy.pet.plist';
   }
 
   static const String launchAgentLabel = 'dev.petfy.pet';
 
   static String get installedAppExecutable {
-    final home = Platform.environment['HOME'];
-    return '${home ?? repoRoot}/Applications/Petfy.app/Contents/MacOS/Petfy';
+    return '${userHome ?? repoRoot}/Applications/Petfy.app/Contents/MacOS/Petfy';
   }
 
   static String get stdoutLog => '$stateDir/petfy.out.log';
@@ -5917,10 +5930,14 @@ class ProjectPaths {
   }
 
   static String get nodeBinary {
+    final runtimeNodePath = Platform.environment['PETFY_NODE_PATH'];
+    if (runtimeNodePath != null && runtimeNodePath.isNotEmpty) {
+      return runtimeNodePath;
+    }
     if (_definedNodePath.isNotEmpty) {
       return _definedNodePath;
     }
-    return Platform.environment['PETFY_NODE_PATH'] ?? 'node';
+    return Platform.isWindows ? 'node.exe' : 'node';
   }
 }
 

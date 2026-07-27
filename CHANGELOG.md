@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.2-beta.3 - 2026-07-27
+
+### Fixed
+
+- Windows now resolves Codex files from `USERPROFILE` when `HOME` is absent,
+  instead of incorrectly looking inside the Petfy installation directory.
+- Installed launchers now override a build-time Node.js path, preventing repair
+  and focus actions from trying to execute the GitHub Actions Node binary.
+
 ## v0.0.2-beta.2 - 2026-07-27
 
 ### Added
