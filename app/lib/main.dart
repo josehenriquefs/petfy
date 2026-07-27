@@ -1792,7 +1792,7 @@ class _FloatingPetButtonState extends State<_FloatingPetButton>
     final isAttentionPose =
         widget.mascot.hasPoseAnimations && _currentMood == _PugMood.attention;
     final cycleMilliseconds = isAttentionPose
-        ? 1800
+        ? _PetfyMascot.attentionLoopDuration.inMilliseconds
         : widget.mascot.hasPoseAnimations
         ? 20000
         : 1600;
@@ -2116,6 +2116,8 @@ enum _PetfyMascot {
   final String id;
   final String label;
   final String assetId;
+
+  static const attentionLoopDuration = Duration(milliseconds: 4800);
 
   static const options = [
     _SelectOption(value: 'pug', label: 'Pug'),
@@ -4248,7 +4250,9 @@ class _AnimationPreviewPanelState extends State<_AnimationPreviewPanel>
     if (_mood != _PugMood.attention) {
       return _poseController.value;
     }
-    return (_poseController.value * (20000 / 1800)) % 1;
+    return (_poseController.value *
+            (20000 / _PetfyMascot.attentionLoopDuration.inMilliseconds)) %
+        1;
   }
 
   String get _stateDescription => switch (_mood) {
