@@ -26,9 +26,9 @@ if "%COMMAND%"=="-h" goto :help
 
 if "%COMMAND%"=="dev-windows" (
   call :require_node
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   call :require_flutter
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
   "%FLUTTER_PATH%" run -d windows --dart-define="PETFY_ROOT=%REPO_ROOT%" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   exit /b %ERRORLEVEL%
@@ -36,12 +36,12 @@ if "%COMMAND%"=="dev-windows" (
 
 if "%COMMAND%"=="install-windows" (
   call :require_node
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   call :require_flutter
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
   "%FLUTTER_PATH%" build windows --release --dart-define="PETFY_ROOT=%LOCALAPPDATA%\Petfy" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%"
   node scripts\windows-app.js install
   exit /b %ERRORLEVEL%
@@ -49,12 +49,12 @@ if "%COMMAND%"=="install-windows" (
 
 if "%COMMAND%"=="package-windows" (
   call :require_node
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   call :require_flutter
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
   "%FLUTTER_PATH%" build windows --release --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%"
   node scripts\package-windows.js
   exit /b %ERRORLEVEL%
@@ -86,7 +86,7 @@ if "%COMMAND%"=="doctor-windows" (
 
 if "%COMMAND%"=="analyze" (
   call :require_flutter
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
   "%FLUTTER_PATH%" analyze
   exit /b %ERRORLEVEL%
@@ -94,7 +94,7 @@ if "%COMMAND%"=="analyze" (
 
 if "%COMMAND%"=="test" (
   call :require_flutter
-  if errorlevel 1 exit /b %ERRORLEVEL%
+  if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
   "%FLUTTER_PATH%" test
   exit /b %ERRORLEVEL%
@@ -112,6 +112,9 @@ if "%NODE_PATH%"=="" (
 exit /b 0
 
 :require_flutter
+if "%FLUTTER_PATH%"=="" (
+  if defined FLUTTER_ROOT if exist "%FLUTTER_ROOT%\bin\flutter.bat" set "FLUTTER_PATH=%FLUTTER_ROOT%\bin\flutter.bat"
+)
 if "%FLUTTER_PATH%"=="" (
   for /f "usebackq delims=" %%F in (`where flutter.bat 2^>nul`) do (
     set "FLUTTER_PATH=%%F"
