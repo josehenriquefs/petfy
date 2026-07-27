@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.0.2-beta.6 - 2026-07-27
+
+### Fixed
+
+- Windows no longer attaches Petfy to the installer's console, so closing the
+  terminal does not close the pet.
+- Successful Windows installs now close their command window automatically.
+- Windows panel placement now preserves the pet anchor and clamps Settings and
+  other expanded panels inside the visible desktop area.
+
 ## v0.0.2-beta.5 - 2026-07-27
 
 ### Fixed

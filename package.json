@@ -1,7 +1,7 @@
 {
   "name": "petfy",
   "private": true,
-  "version": "0.0.2-beta.5",
+  "version": "0.0.2-beta.6",
   "type": "module",
   "description": "Multiplatform desktop pet for Codex task events.",
   "workspaces": [

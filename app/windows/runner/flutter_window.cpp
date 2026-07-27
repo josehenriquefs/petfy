@@ -169,16 +169,23 @@ void FlutterWindow::SetExpanded(const flutter::EncodableValue* arguments) {
       kMinExpandedHeight, kMaxExpandedHeight);
   const std::string placement = StringValue(FindValue(map, "placement"), PopoverPlacement());
   int x = compact_frame_.right - kExpandedWidth;
-  int y = compact_frame_.bottom - height;
+  int y = compact_frame_.top;
 
   if (placement == "rightDown") {
     x = compact_frame_.left;
   } else if (placement == "rightUp") {
     x = compact_frame_.left;
-    y = compact_frame_.top;
+    y = compact_frame_.bottom - height;
   } else if (placement == "leftUp") {
-    y = compact_frame_.top;
+    y = compact_frame_.bottom - height;
   }
+
+  const int min_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+  const int min_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+  const int max_x = min_x + GetSystemMetrics(SM_CXVIRTUALSCREEN) - kExpandedWidth;
+  const int max_y = min_y + GetSystemMetrics(SM_CYVIRTUALSCREEN) - height;
+  x = std::clamp(x, min_x, max_x);
+  y = std::clamp(y, min_y, max_y);
 
   SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, kExpandedWidth, height,
                SWP_NOACTIVATE | SWP_FRAMECHANGED);

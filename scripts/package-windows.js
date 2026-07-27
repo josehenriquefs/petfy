@@ -153,8 +153,6 @@ echo Petfy installed.
 echo App: %APP_DEST%
 echo Runtime: %INSTALL_ROOT%
 echo State: %STATE_DIR%
-echo.
-pause
 `;
 }
 
