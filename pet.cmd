@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "REPO_ROOT=%~dp0"
 if "%REPO_ROOT:~-1%"=="\" set "REPO_ROOT=%REPO_ROOT:~0,-1%"
@@ -30,7 +30,7 @@ if "%COMMAND%"=="dev-windows" (
   call :require_flutter
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER_PATH%" run -d windows --dart-define="PETFY_ROOT=%REPO_ROOT%" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
+  "!FLUTTER_PATH!" run -d windows --dart-define="PETFY_ROOT=%REPO_ROOT%" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   exit /b %ERRORLEVEL%
 )
 
@@ -40,7 +40,7 @@ if "%COMMAND%"=="install-windows" (
   call :require_flutter
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER_PATH%" build windows --release --dart-define="PETFY_ROOT=%LOCALAPPDATA%\Petfy" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
+  "!FLUTTER_PATH!" build windows --release --dart-define="PETFY_ROOT=%LOCALAPPDATA%\Petfy" --dart-define="PETFY_STATE_DIR=%STATE_DIR%" --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%"
   node scripts\windows-app.js install
@@ -53,7 +53,7 @@ if "%COMMAND%"=="package-windows" (
   call :require_flutter
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER_PATH%" build windows --release --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
+  "!FLUTTER_PATH!" build windows --release --dart-define="PETFY_NODE_PATH=%NODE_PATH%"
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%"
   node scripts\package-windows.js
@@ -88,7 +88,7 @@ if "%COMMAND%"=="analyze" (
   call :require_flutter
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER_PATH%" analyze
+  "!FLUTTER_PATH!" analyze
   exit /b %ERRORLEVEL%
 )
 
@@ -96,7 +96,7 @@ if "%COMMAND%"=="test" (
   call :require_flutter
   if errorlevel 1 exit /b 1
   cd /d "%REPO_ROOT%\app"
-  "%FLUTTER_PATH%" test
+  "!FLUTTER_PATH!" test
   exit /b %ERRORLEVEL%
 )
 
