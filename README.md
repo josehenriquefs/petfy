@@ -322,13 +322,21 @@ The zip contains:
 
 ## Windows Tester Artifact
 
-Without a local Windows machine, generate a tester package through GitHub:
+The `v0.0.2-beta.1` prerelease already contains the first Windows tester ZIP. A tester can download it, extract it, and double-click `install.cmd`. They need Windows 10/11 x64, Node.js LTS, and a Codex surface; Flutter, Git, and Python are not required.
+
+To generate another Windows-only tester package through GitHub:
 
 1. Open the repository's **Actions** tab.
 2. Run **Windows Tester Package** manually.
 3. Download the `Petfy-windows-tester` artifact when the workflow completes.
 4. Send the extracted ZIP to the tester. They double-click `install.cmd`, then
    `test-event.cmd` to confirm the floating completion notification.
+
+## Unified Releases
+
+Use **Actions -> Publish Platform Release -> Run workflow** to build and publish macOS, Windows, and Linux packages under one tag.
+
+The tag must match `package.json`: for version `0.0.2`, enter `v0.0.2`. The workflow validates the Flutter app and bridge on each native runner, packages all three assets, generates `SHA256SUMS.txt`, and creates one GitHub release. Use the prerelease option until each platform package has been tested on its target operating system.
 
 The tester needs Node.js LTS for Codex hooks. When it is missing, the installer
 opens the official Node.js download page and asks the user to run it again after

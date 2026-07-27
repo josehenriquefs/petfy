@@ -211,12 +211,12 @@ Phase 1: manual artifacts.
 - Build Linux on Linux.
 - Upload artifacts manually to GitHub Releases.
 
-Phase 2: GitHub Actions.
+Phase 2: GitHub Actions. Implemented through `.github/workflows/release-platforms.yml`.
 
 - `macos-latest`: build/package macOS.
 - `windows-latest`: build/package Windows.
 - `ubuntu-latest`: build/package Linux.
-- Upload artifacts to draft release.
+- Publish artifacts to one GitHub release selected by its tag.
 - Generate SHA256 checksums.
 
 Phase 3: signed public releases.
@@ -239,6 +239,5 @@ Before publishing a release:
 
 1. Validate Windows package on Windows.
 2. Validate Linux package on Linux.
-3. Add GitHub release artifact naming/checksum script.
-4. Add GitHub Actions release workflow in draft mode.
-5. Add signing/notarization only after unsigned packages work reliably.
+3. Validate the automated release workflow on each target OS.
+4. Add signing/notarization only after unsigned packages work reliably.

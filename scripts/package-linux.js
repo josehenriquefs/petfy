@@ -2,12 +2,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
 const version = packageJson.version || "0.0.0";
 const builtBundle = path.join(repoRoot, "app", "build", "linux", "x64", "release", "bundle");
-const builtExecutable = path.join(builtBundle, "petfy");
+const builtExecutable = path.join(builtBundle, "app");
 const distDir = path.join(repoRoot, "dist", "linux");
 const packageDir = path.join(distDir, `Petfy-linux-x64-v${version}`);
 const payloadDir = path.join(packageDir, "payload");
@@ -117,7 +118,7 @@ echo "Installing Petfy ${version}"
 echo "Package: $package_dir"
 echo "Node.js: $node_bin"
 
-pkill -x petfy >/dev/null 2>&1 || true
+pkill -x app >/dev/null 2>&1 || true
 rm -rf "$app_dest" "$support_dest/bridge" "$support_dest/scripts"
 cp -R "$app_source" "$app_dest"
 cp -R "$support_source/bridge" "$support_dest/bridge"
@@ -131,7 +132,7 @@ export PETFY_ROOT="$support_dest"
 export PETFY_STATE_DIR="\\\${PETFY_STATE_DIR:-$HOME/.petfy}"
 export PETFY_NODE_PATH="\\\${PETFY_NODE_PATH:-$node_bin}"
 mkdir -p "\\$PETFY_STATE_DIR"
-exec "$app_dest/petfy" >> "\\$PETFY_STATE_DIR/petfy.out.log" 2>> "\\$PETFY_STATE_DIR/petfy.err.log"
+exec "$app_dest/app" >> "\\$PETFY_STATE_DIR/petfy.out.log" 2>> "\\$PETFY_STATE_DIR/petfy.err.log"
 LAUNCHER
 chmod +x "$launcher_path"
 
@@ -175,14 +176,14 @@ autostart_path="$HOME/.config/autostart/dev.petfy.pet.desktop"
 echo "Petfy Linux diagnostics"
 echo ""
 [ -d "$app_dest" ] && echo "ok  App: $app_dest" || echo "miss App: $app_dest"
-[ -x "$app_dest/petfy" ] && echo "ok  Executable" || echo "miss Executable"
+[ -x "$app_dest/app" ] && echo "ok  Executable" || echo "miss Executable"
 [ -f "$install_root/bridge/src/cli.js" ] && echo "ok  Bridge" || echo "miss Bridge"
 [ -f "$install_root/scripts/petfy-event.sh" ] && echo "ok  Hook script" || echo "miss Hook script"
 [ -x "$launcher_path" ] && echo "ok  Launcher: $launcher_path" || echo "miss Launcher: $launcher_path"
 [ -f "$desktop_path" ] && echo "ok  Desktop entry: $desktop_path" || echo "miss Desktop entry: $desktop_path"
 [ -f "$autostart_path" ] && echo "ok  Autostart: $autostart_path" || echo "miss Autostart: $autostart_path"
 [ -d "$state_dir" ] && echo "ok  State: $state_dir" || echo "miss State: $state_dir"
-pgrep -x petfy >/dev/null 2>&1 && echo "ok  Running process" || echo "miss Running process"
+pgrep -x app >/dev/null 2>&1 && echo "ok  Running process" || echo "miss Running process"
 [ -f "$HOME/.codex/hooks.json" ] && grep -q "petfy" "$HOME/.codex/hooks.json" && echo "ok  Codex hooks" || echo "miss Codex hooks"
 [ -f "$HOME/.codex/config.toml" ] && grep -q "petfy-notify" "$HOME/.codex/config.toml" && echo "ok  Codex notify" || echo "miss Codex notify"
 command -v node >/dev/null 2>&1 && echo "ok  Node.js: $(command -v node)" || echo "warn Node.js not found in PATH"
@@ -201,7 +202,7 @@ launcher_path="$HOME/.local/bin/petfy"
 desktop_path="$HOME/.local/share/applications/dev.petfy.pet.desktop"
 autostart_path="$HOME/.config/autostart/dev.petfy.pet.desktop"
 
-pkill -x petfy >/dev/null 2>&1 || true
+pkill -x app >/dev/null 2>&1 || true
 rm -f "$launcher_path" "$desktop_path" "$autostart_path"
 rm -rf "$install_root"
 

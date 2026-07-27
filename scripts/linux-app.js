@@ -3,8 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const home = os.homedir();
 const appName = "Petfy";
 const label = "dev.petfy.pet";
@@ -44,7 +45,7 @@ switch (command) {
 }
 
 function install() {
-  if (!fs.existsSync(path.join(builtBundle, "petfy"))) {
+  if (!fs.existsSync(path.join(builtBundle, "app"))) {
     fail(`Built Linux bundle not found: ${builtBundle}\nRun this on Linux: ./pet install-linux`);
   }
 
@@ -103,7 +104,7 @@ function start() {
 }
 
 function stop() {
-  spawnSync("pkill", ["-x", "petfy"], { encoding: "utf8" });
+  spawnSync("pkill", ["-x", "app"], { encoding: "utf8" });
   spawnSync("pkill", ["-x", appName], { encoding: "utf8" });
   console.log("Petfy stop requested.");
 }
@@ -121,7 +122,7 @@ function uninstall() {
 function status() {
   const checks = [
     ["Installed app", installedAppDir],
-    ["Executable", path.join(installedAppDir, "petfy")],
+    ["Executable", path.join(installedAppDir, "app")],
     ["Bridge", path.join(bridgeDir, "src", "cli.js")],
     ["Hook script", path.join(supportScriptsDir, "petfy-event.sh")],
     ["Launcher", launcherPath],
@@ -136,8 +137,8 @@ function status() {
     console.log(`${fs.existsSync(target) ? "ok " : "miss"} ${name}: ${target}`);
   }
 
-  const pgrep = spawnSync("pgrep", ["-x", "petfy"], { encoding: "utf8" });
-  console.log(`${pgrep.status === 0 ? "ok " : "miss"} Running process: petfy`);
+  const pgrep = spawnSync("pgrep", ["-x", "app"], { encoding: "utf8" });
+  console.log(`${pgrep.status === 0 ? "ok " : "miss"} Running process: app`);
 
   const hooksPath = path.join(home, ".codex", "hooks.json");
   const configPath = path.join(home, ".codex", "config.toml");
@@ -184,7 +185,7 @@ export PETFY_STATE_DIR="\${PETFY_STATE_DIR:-$HOME/.petfy}"
 export PETFY_NODE_PATH="\${PETFY_NODE_PATH:-$(command -v node 2>/dev/null || true)}"
 
 mkdir -p "$PETFY_STATE_DIR"
-exec "${path.join(installedAppDir, "petfy")}" >> "$PETFY_STATE_DIR/petfy.out.log" 2>> "$PETFY_STATE_DIR/petfy.err.log"
+exec "${path.join(installedAppDir, "app")}" >> "$PETFY_STATE_DIR/petfy.out.log" 2>> "$PETFY_STATE_DIR/petfy.err.log"
 `;
 }
 
