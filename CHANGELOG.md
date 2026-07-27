@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.0.2-beta.2 - 2026-07-27
+
+### Added
+
+- One GitHub Actions workflow that natively builds macOS, Windows, and Linux
+  packages for the same tag and publishes their checksums together.
+
+### Fixed
+
+- Linux packaging and installation now use Flutter's generated `app` binary.
+- Release scripts can use the Flutter runtime provided by GitHub Actions when
+  the project's local Flutter runtime is unavailable.
+
 ## v0.0.2-beta.1 - 2026-07-27
 
 ### Fixed
