@@ -8,7 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
 const version = packageJson.version || "0.0.0";
 const builtBundle = path.join(repoRoot, "app", "build", "windows", "x64", "runner", "Release");
-const builtExecutable = path.join(builtBundle, "petfy.exe");
+const builtExecutable = path.join(builtBundle, "app.exe");
 const distDir = path.join(repoRoot, "dist", "windows");
 const packageDir = path.join(distDir, `Petfy-windows-x64-v${version}`);
 const payloadDir = path.join(packageDir, "payload");
@@ -124,7 +124,7 @@ echo Installing Petfy ${version}>>"%LOG_PATH%"
 echo Package: %PACKAGE_DIR%>>"%LOG_PATH%"
 echo Node.js: %NODE_BIN%>>"%LOG_PATH%"
 
-taskkill /IM petfy.exe /F >nul 2>nul
+taskkill /IM app.exe /F >nul 2>nul
 rmdir /S /Q "%APP_DEST%" >nul 2>nul
 rmdir /S /Q "%INSTALL_ROOT%\\bridge" >nul 2>nul
 rmdir /S /Q "%INSTALL_ROOT%\\scripts" >nul 2>nul
@@ -140,7 +140,7 @@ xcopy "%SUPPORT_SOURCE%\\scripts" "%INSTALL_ROOT%\\scripts\\" /E /I /Y >nul
   echo if "%%PETFY_STATE_DIR%%"=="" set "PETFY_STATE_DIR=%%USERPROFILE%%\\.petfy"
   echo if "%%PETFY_NODE_PATH%%"=="" set "PETFY_NODE_PATH=%NODE_BIN%"
   echo if not exist "%%PETFY_STATE_DIR%%" mkdir "%%PETFY_STATE_DIR%%"
-  echo start "" "%APP_DEST%\\petfy.exe"
+  echo start "" "%APP_DEST%\\app.exe"
 ) > "%LAUNCHER%"
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$shell = New-Object -ComObject WScript.Shell; $shortcut = $shell.CreateShortcut('%STARTUP_SHORTCUT%'); $shortcut.TargetPath = '%LAUNCHER%'; $shortcut.WorkingDirectory = '%INSTALL_ROOT%'; $shortcut.WindowStyle = 7; $shortcut.Save()"
@@ -171,13 +171,13 @@ set "STARTUP_SHORTCUT=%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Start
 echo Petfy Windows diagnostics
 echo.
 if exist "%APP_DEST%" (echo ok  App: %APP_DEST%) else (echo miss App: %APP_DEST%)
-if exist "%APP_DEST%\\petfy.exe" (echo ok  Executable) else (echo miss Executable)
+if exist "%APP_DEST%\\app.exe" (echo ok  Executable) else (echo miss Executable)
 if exist "%INSTALL_ROOT%\\bridge\\src\\cli.js" (echo ok  Bridge) else (echo miss Bridge)
 if exist "%INSTALL_ROOT%\\scripts\\petfy-event.sh" (echo ok  Hook script) else (echo miss Hook script)
 if exist "%LAUNCHER%" (echo ok  Launcher: %LAUNCHER%) else (echo miss Launcher: %LAUNCHER%)
 if exist "%STARTUP_SHORTCUT%" (echo ok  Startup shortcut: %STARTUP_SHORTCUT%) else (echo miss Startup shortcut: %STARTUP_SHORTCUT%)
 if exist "%STATE_DIR%" (echo ok  State: %STATE_DIR%) else (echo miss State: %STATE_DIR%)
-tasklist /FI "IMAGENAME eq petfy.exe" | findstr /I "petfy.exe" >nul && echo ok  Running process || echo miss Running process
+tasklist /FI "IMAGENAME eq app.exe" | findstr /I "app.exe" >nul && echo ok  Running process || echo miss Running process
 if exist "%USERPROFILE%\\.codex\\hooks.json" (findstr /C:"petfy" "%USERPROFILE%\\.codex\\hooks.json" >nul && echo ok  Codex hooks || echo miss Codex hooks) else echo miss Codex hooks
 if exist "%USERPROFILE%\\.codex\\config.toml" (findstr /C:"petfy-notify" "%USERPROFILE%\\.codex\\config.toml" >nul && echo ok  Codex notify || echo miss Codex notify) else echo miss Codex notify
 where node.exe >nul 2>nul && echo ok  Node.js || echo warn Node.js not found in PATH
@@ -235,7 +235,7 @@ setlocal EnableExtensions
 set "INSTALL_ROOT=%LOCALAPPDATA%\\Petfy"
 set "STARTUP_SHORTCUT=%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Petfy.lnk"
 
-taskkill /IM petfy.exe /F >nul 2>nul
+taskkill /IM app.exe /F >nul 2>nul
 del /F /Q "%STARTUP_SHORTCUT%" >nul 2>nul
 rmdir /S /Q "%INSTALL_ROOT%" >nul 2>nul
 

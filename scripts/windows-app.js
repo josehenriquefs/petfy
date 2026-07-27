@@ -49,7 +49,7 @@ switch (command) {
 }
 
 function install() {
-  if (!fs.existsSync(path.join(builtBundle, "petfy.exe"))) {
+  if (!fs.existsSync(path.join(builtBundle, "app.exe"))) {
     fail(`Built Windows bundle not found: ${builtBundle}\nRun this on Windows: .\\pet install-windows`);
   }
 
@@ -103,7 +103,7 @@ function start() {
 }
 
 function stop() {
-  spawnSync("taskkill.exe", ["/IM", "petfy.exe", "/F"], { encoding: "utf8" });
+  spawnSync("taskkill.exe", ["/IM", "app.exe", "/F"], { encoding: "utf8" });
   console.log("Petfy stop requested.");
 }
 
@@ -118,7 +118,7 @@ function uninstall() {
 function status() {
   const checks = [
     ["Installed app", installedAppDir],
-    ["Executable", path.join(installedAppDir, "petfy.exe")],
+    ["Executable", path.join(installedAppDir, "app.exe")],
     ["Bridge", path.join(bridgeDir, "src", "cli.js")],
     ["Hook script", path.join(supportScriptsDir, "petfy-event.sh")],
     ["Launcher", launcherPath],
@@ -132,11 +132,11 @@ function status() {
     console.log(`${fs.existsSync(target) ? "ok " : "miss"} ${name}: ${target}`);
   }
 
-  const tasklist = spawnSync("tasklist.exe", ["/FI", "IMAGENAME eq petfy.exe"], {
+  const tasklist = spawnSync("tasklist.exe", ["/FI", "IMAGENAME eq app.exe"], {
     encoding: "utf8"
   });
   console.log(
-    `${tasklist.stdout?.includes("petfy.exe") ? "ok " : "miss"} Running process: petfy.exe`
+    `${tasklist.stdout?.includes("app.exe") ? "ok " : "miss"} Running process: app.exe`
   );
 
   const codexHome = process.env.CODEX_HOME || path.join(home, ".codex");
@@ -182,7 +182,7 @@ set "PETFY_ROOT=${installRoot}"
 if "%PETFY_STATE_DIR%"=="" set "PETFY_STATE_DIR=%USERPROFILE%\\.petfy"
 if "%PETFY_NODE_PATH%"=="" set "PETFY_NODE_PATH=${nodeBin}"
 if not exist "%PETFY_STATE_DIR%" mkdir "%PETFY_STATE_DIR%"
-start "" "${path.join(installedAppDir, "petfy.exe")}"
+start "" "${path.join(installedAppDir, "app.exe")}"
 `;
 }
 
