@@ -495,7 +495,8 @@ class _PetHomePageState extends State<PetHomePage> {
     }
 
     final content = await hooksFile.readAsString();
-    final hasPetfyHook = content.contains('petfy-event.sh');
+    final hasPetfyHook = content.contains('petfy-event.sh') ||
+        content.contains('petfy-event.js');
     return SetupDiagnostic(
       label: 'Codex hooks',
       ok: hasPetfyHook,
@@ -514,7 +515,8 @@ class _PetHomePageState extends State<PetHomePage> {
     }
 
     final content = await configFile.readAsString();
-    final hasNotify = content.contains('petfy-notify.sh');
+    final hasNotify = content.contains('petfy-notify.sh') ||
+        content.contains('petfy-event.js');
     return SetupDiagnostic(
       label: 'Codex notify',
       ok: hasNotify,
@@ -600,24 +602,9 @@ class _PetHomePageState extends State<PetHomePage> {
       ], workingDirectory: ProjectPaths.repoRoot);
 
       if (result.exitCode != 0 && mounted) {
-        setState(() => _error = result.stderr.toString());
-      } else {
+        final error = result.stderr.toString().trim();
         final output = result.stdout.toString().trim();
-        if (output.isNotEmpty) {
-          final json = jsonDecode(output) as Map<String, dynamic>;
-          if (json['ok'] != true && mounted) {
-            final reason =
-                json['reason']?.toString() ?? 'Unable to focus project';
-            final attempted = json['attempted'] is List
-                ? (json['attempted'] as List).join(', ')
-                : '';
-            setState(() {
-              _error = attempted.isEmpty
-                  ? reason
-                  : '$reason. Tried: $attempted';
-            });
-          }
-        }
+        setState(() => _error = error.isEmpty ? output : error);
       }
     } on Object catch (error) {
       if (mounted) {

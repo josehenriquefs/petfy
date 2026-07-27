@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.2-beta.4 - 2026-07-27
+
+### Fixed
+
+- Windows diagnostics now recognizes the JavaScript hook and notify bridge used
+  by the native Windows installer.
+- Repair no longer treats the integration installer's regular text output as a
+  JSON response.
+
 ## v0.0.2-beta.3 - 2026-07-27
 
 ### Fixed
