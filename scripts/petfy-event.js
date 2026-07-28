@@ -27,6 +27,7 @@ try {
     ok: false,
     error: error instanceof Error ? error.message : String(error)
   });
+  process.exitCode = 1;
 }
 
 function readStdin() {

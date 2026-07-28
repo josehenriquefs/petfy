@@ -2,8 +2,11 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// URL.pathname produces /C:/... on Windows. Convert the module URL before
+// resolving the installed runtime directory so Codex receives valid paths.
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hookScript = path.join(repoRoot, "scripts", "petfy-event.sh");
 const hookScriptJs = path.join(repoRoot, "scripts", "petfy-event.js");
 const notifyScript = path.join(repoRoot, "scripts", "petfy-notify.sh");

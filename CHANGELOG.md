@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.0.2-beta.8 - 2026-07-28
+
+### Fixed
+
+- Windows now resolves the installed Petfy runtime directory correctly before
+  writing Codex hooks and `notify`, so `task.started` and completion events can
+  reach the local bridge.
+- The Windows installer stops and points to its log when Codex integration
+  setup fails instead of silently launching an unconfigured app.
+- Windows diagnostics now recognizes the JavaScript notify handler actually
+  configured by the installer.
+
 ## v0.0.2-beta.7 - 2026-07-28
 
 ### Fixed

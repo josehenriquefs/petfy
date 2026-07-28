@@ -146,7 +146,13 @@ xcopy "%SUPPORT_SOURCE%\\scripts" "%INSTALL_ROOT%\\scripts\\" /E /I /Y >nul
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$shell = New-Object -ComObject WScript.Shell; $shortcut = $shell.CreateShortcut('%STARTUP_SHORTCUT%'); $shortcut.TargetPath = '%LAUNCHER%'; $shortcut.WorkingDirectory = '%INSTALL_ROOT%'; $shortcut.WindowStyle = 7; $shortcut.Save()"
 
 set "PETFY_NODE_PATH=%NODE_BIN%"
-"%NODE_BIN%" "%INSTALL_ROOT%\\scripts\\install-codex-integration.js"
+"%NODE_BIN%" "%INSTALL_ROOT%\\scripts\\install-codex-integration.js" >>"%LOG_PATH%" 2>&1
+if errorlevel 1 (
+  echo Petfy could not configure Codex hooks and notifications.
+  echo Details: %LOG_PATH%
+  pause
+  exit /b 1
+)
 call "%LAUNCHER%"
 
 echo Petfy installed.
@@ -177,7 +183,7 @@ if exist "%STARTUP_SHORTCUT%" (echo ok  Startup shortcut: %STARTUP_SHORTCUT%) el
 if exist "%STATE_DIR%" (echo ok  State: %STATE_DIR%) else (echo miss State: %STATE_DIR%)
 tasklist /FI "IMAGENAME eq app.exe" | findstr /I "app.exe" >nul && echo ok  Running process || echo miss Running process
 if exist "%USERPROFILE%\\.codex\\hooks.json" (findstr /C:"petfy" "%USERPROFILE%\\.codex\\hooks.json" >nul && echo ok  Codex hooks || echo miss Codex hooks) else echo miss Codex hooks
-if exist "%USERPROFILE%\\.codex\\config.toml" (findstr /C:"petfy-notify" "%USERPROFILE%\\.codex\\config.toml" >nul && echo ok  Codex notify || echo miss Codex notify) else echo miss Codex notify
+if exist "%USERPROFILE%\\.codex\\config.toml" (findstr /C:"petfy-event.js" "%USERPROFILE%\\.codex\\config.toml" >nul && echo ok  Codex notify || echo miss Codex notify) else echo miss Codex notify
 where node.exe >nul 2>nul && echo ok  Node.js || echo warn Node.js not found in PATH
 echo.
 pause
