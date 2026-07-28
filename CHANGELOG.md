@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.2-beta.7 - 2026-07-28
+
+### Fixed
+
+- Windows native window dimensions now honor the monitor DPI, keeping Working,
+  Done, and Settings panels readable at 125%, 150%, and higher display scale.
+- Opening and closing panels no longer force a native non-client frame rebuild,
+  avoiding the opening visual glitch.
+
 ## v0.0.2-beta.6 - 2026-07-27
 
 ### Fixed

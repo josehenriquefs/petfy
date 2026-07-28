@@ -4,7 +4,7 @@ Floating desktop companion for Codex task notifications.
 
 Petfy is a small Flutter desktop app that stays above your windows, listens for Codex lifecycle events, and lets you jump back to the project that just finished. It is built for people who use Codex across the CLI, Desktop app, and VS Code extension and want one lightweight visual signal for completed work or required attention.
 
-Current version: `v0.0.2-beta.6`
+Current version: `v0.0.2-beta.7`
 
 ## Project Documents
 

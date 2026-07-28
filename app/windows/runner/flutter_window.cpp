@@ -16,6 +16,10 @@ constexpr int kMinExpandedHeight = 320;
 constexpr int kMaxExpandedHeight = 680;
 constexpr int kWindowMargin = 24;
 
+int ScaleLogical(HWND handle, int logical_pixels) {
+  return MulDiv(logical_pixels, static_cast<int>(GetDpiForWindow(handle)), 96);
+}
+
 const flutter::EncodableMap* AsMap(const flutter::EncodableValue* value) {
   return value == nullptr ? nullptr : std::get_if<flutter::EncodableMap>(value);
 }
@@ -101,14 +105,19 @@ void FlutterWindow::ConfigurePetWindow() {
   SetWindowLongPtr(handle, GWL_STYLE, WS_POPUP);
   SetWindowLongPtr(handle, GWL_EXSTYLE,
                    GetWindowLongPtr(handle, GWL_EXSTYLE) | WS_EX_TOOLWINDOW);
+  SetWindowPos(handle, nullptr, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE |
+                   SWP_FRAMECHANGED);
 
   // Extending the DWM frame lets Flutter's transparent root canvas reveal the
   // desktop rather than the default opaque runner background.
   const MARGINS margins = {-1};
   DwmExtendFrameIntoClientArea(handle, &margins);
 
-  const int x = GetSystemMetrics(SM_CXSCREEN) - kCompactSize - kWindowMargin;
-  SetCompactFrame(x, kWindowMargin);
+  const int compact_size = ScaleLogical(handle, kCompactSize);
+  const int margin = ScaleLogical(handle, kWindowMargin);
+  const int x = GetSystemMetrics(SM_CXSCREEN) - compact_size - margin;
+  SetCompactFrame(x, margin);
 }
 
 void FlutterWindow::ConfigureWindowChannel() {
@@ -164,11 +173,13 @@ void FlutterWindow::SetExpanded(const flutter::EncodableValue* arguments) {
     return;
   }
 
-  const int height = std::clamp(
+  const int logical_height = std::clamp(
       static_cast<int>(NumberValue(FindValue(map, "height"), kMinExpandedHeight)),
       kMinExpandedHeight, kMaxExpandedHeight);
+  const int width = ScaleLogical(GetHandle(), kExpandedWidth);
+  const int height = ScaleLogical(GetHandle(), logical_height);
   const std::string placement = StringValue(FindValue(map, "placement"), PopoverPlacement());
-  int x = compact_frame_.right - kExpandedWidth;
+  int x = compact_frame_.right - width;
   int y = compact_frame_.top;
 
   if (placement == "rightDown") {
@@ -182,13 +193,12 @@ void FlutterWindow::SetExpanded(const flutter::EncodableValue* arguments) {
 
   const int min_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
   const int min_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-  const int max_x = min_x + GetSystemMetrics(SM_CXVIRTUALSCREEN) - kExpandedWidth;
+  const int max_x = min_x + GetSystemMetrics(SM_CXVIRTUALSCREEN) - width;
   const int max_y = min_y + GetSystemMetrics(SM_CYVIRTUALSCREEN) - height;
   x = std::clamp(x, min_x, max_x);
   y = std::clamp(y, min_y, max_y);
 
-  SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, kExpandedWidth, height,
-               SWP_NOACTIVATE | SWP_FRAMECHANGED);
+  SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, width, height, SWP_NOACTIVATE);
 }
 
 void FlutterWindow::SetStartupPosition(const flutter::EncodableValue* arguments) {
@@ -200,23 +210,27 @@ void FlutterWindow::SetStartupPosition(const flutter::EncodableValue* arguments)
   const std::string position = StringValue(FindValue(map, "position"), "topRight");
   const int width = GetSystemMetrics(SM_CXSCREEN);
   const int height = GetSystemMetrics(SM_CYSCREEN);
-  int x = width - kCompactSize - kWindowMargin;
-  int y = kWindowMargin;
+  const int compact_size = ScaleLogical(GetHandle(), kCompactSize);
+  const int margin = ScaleLogical(GetHandle(), kWindowMargin);
+  int x = width - compact_size - margin;
+  int y = margin;
 
   if (position == "topLeft") {
-    x = kWindowMargin;
+    x = margin;
   } else if (position == "bottomRight") {
-    y = height - kCompactSize - kWindowMargin;
+    y = height - compact_size - margin;
   } else if (position == "bottomLeft") {
-    x = kWindowMargin;
-    y = height - kCompactSize - kWindowMargin;
+    x = margin;
+    y = height - compact_size - margin;
   }
   SetCompactFrame(x, y);
 }
 
 void FlutterWindow::ResetPosition() {
-  const int x = GetSystemMetrics(SM_CXSCREEN) - kCompactSize - kWindowMargin;
-  SetCompactFrame(x, kWindowMargin);
+  const int compact_size = ScaleLogical(GetHandle(), kCompactSize);
+  const int margin = ScaleLogical(GetHandle(), kWindowMargin);
+  const int x = GetSystemMetrics(SM_CXSCREEN) - compact_size - margin;
+  SetCompactFrame(x, margin);
 }
 
 std::string FlutterWindow::PopoverPlacement() const {
@@ -232,8 +246,9 @@ std::string FlutterWindow::PopoverPlacement() const {
 }
 
 void FlutterWindow::SetCompactFrame(int x, int y) {
-  SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, kCompactSize, kCompactSize,
-               SWP_NOACTIVATE | SWP_FRAMECHANGED);
+  const int compact_size = ScaleLogical(GetHandle(), kCompactSize);
+  SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, compact_size, compact_size,
+               SWP_NOACTIVATE);
   GetWindowRect(GetHandle(), &compact_frame_);
 }
 
