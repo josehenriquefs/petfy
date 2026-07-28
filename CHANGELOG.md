@@ -11,6 +11,8 @@
   setup fails instead of silently launching an unconfigured app.
 - Windows diagnostics now recognizes the JavaScript notify handler actually
   configured by the installer.
+- Opening a Windows panel now prepares the resized window before showing it,
+  avoiding the empty-frame flash and brief freeze during the opening animation.
 
 ## v0.0.2-beta.7 - 2026-07-28
 

@@ -30,6 +30,7 @@ class FlutterWindow : public Win32Window {
   void BeginDrag();
   void Drag();
   void SetExpanded(const flutter::EncodableValue* arguments);
+  void CommitExpandedFrame();
   void SetStartupPosition(const flutter::EncodableValue* arguments);
   void ResetPosition();
   std::string PopoverPlacement() const;

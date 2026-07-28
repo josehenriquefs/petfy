@@ -136,6 +136,9 @@ void FlutterWindow::ConfigureWindowChannel() {
         } else if (call.method_name() == "setExpanded") {
           SetExpanded(call.arguments());
           result->Success();
+        } else if (call.method_name() == "commitExpandedFrame") {
+          CommitExpandedFrame();
+          result->Success();
         } else if (call.method_name() == "popoverPlacement") {
           result->Success(flutter::EncodableValue(PopoverPlacement()));
         } else if (call.method_name() == "resetPosition") {
@@ -178,6 +181,7 @@ void FlutterWindow::SetExpanded(const flutter::EncodableValue* arguments) {
       kMinExpandedHeight, kMaxExpandedHeight);
   const int width = ScaleLogical(GetHandle(), kExpandedWidth);
   const int height = ScaleLogical(GetHandle(), logical_height);
+  const bool defer_redraw = BoolValue(FindValue(map, "deferRedraw"), false);
   const std::string placement = StringValue(FindValue(map, "placement"), PopoverPlacement());
   int x = compact_frame_.right - width;
   int y = compact_frame_.top;
@@ -198,7 +202,21 @@ void FlutterWindow::SetExpanded(const flutter::EncodableValue* arguments) {
   x = std::clamp(x, min_x, max_x);
   y = std::clamp(y, min_y, max_y);
 
-  SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, width, height, SWP_NOACTIVATE);
+  UINT flags = SWP_NOACTIVATE;
+  if (defer_redraw) {
+    flags |= SWP_NOREDRAW | SWP_NOCOPYBITS;
+  }
+  SetWindowPos(GetHandle(), HWND_TOPMOST, x, y, width, height, flags);
+}
+
+void FlutterWindow::CommitExpandedFrame() {
+  // The Flutter frame is ready by this point. Redraw only now so Windows does
+  // not briefly show an empty expanded surface before the popover is mounted.
+  RedrawWindow(GetHandle(), nullptr, nullptr,
+               RDW_INVALIDATE | RDW_ALLCHILDREN);
+  if (flutter_controller_) {
+    flutter_controller_->ForceRedraw();
+  }
 }
 
 void FlutterWindow::SetStartupPosition(const flutter::EncodableValue* arguments) {

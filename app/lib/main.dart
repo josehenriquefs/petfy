@@ -1130,12 +1130,14 @@ class _PetHomePageState extends State<PetHomePage> {
         true,
         height: _expandedWindowHeight(),
         placement: placement,
+        deferRedraw: true,
       );
-      await Future<void>.delayed(const Duration(milliseconds: 16));
       if (!mounted) {
         return;
       }
       setState(() => _panelOpen = true);
+      await WidgetsBinding.instance.endOfFrame;
+      await WindowController.commitExpandedFrame();
       await _loadDiagnostics();
       return;
     }
@@ -5945,8 +5947,12 @@ class WindowController {
     bool expanded, {
     double? height,
     PopoverPlacement? placement,
+    bool deferRedraw = false,
   }) {
-    final arguments = <String, Object?>{'expanded': expanded};
+    final arguments = <String, Object?>{
+      'expanded': expanded,
+      'deferRedraw': deferRedraw,
+    };
     if (height != null) {
       arguments['height'] = height;
     }
@@ -5954,6 +5960,10 @@ class WindowController {
       arguments['placement'] = placement.nativeValue;
     }
     return _invoke('setExpanded', arguments);
+  }
+
+  static Future<void> commitExpandedFrame() {
+    return _invoke('commitExpandedFrame');
   }
 
   static Future<PopoverPlacement> popoverPlacement() async {
